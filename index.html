@@ -265,6 +265,7 @@ details.backup[open] summary::after{content:"▴"}
 /* ---------- скан VIN ---------- */
 .vin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px}
 .vin-row .hint{margin:0}
+.scan-group{display:flex; gap:7px; flex-wrap:wrap}
 .scan-btn{
   display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
   min-height:40px; padding:0 13px; border-radius:12px;
@@ -275,6 +276,7 @@ details.backup[open] summary::after{content:"▴"}
 .scan-btn:hover{border-color:var(--accent)}
 .scan-btn:active{transform:scale(.97)}
 .scan-btn[disabled]{opacity:.55; pointer-events:none}
+.scan-btn.ghost{background:var(--bg)}
 .scan-overlay{
   position:fixed; inset:0; z-index:120; background:rgba(2,6,23,.55);
   display:none; align-items:center; justify-content:center; padding:20px;
@@ -340,9 +342,13 @@ details.backup[open] summary::after{content:"▴"}
                placeholder="Например XTA21150053912345" autocapitalize="characters" spellcheck="false" />
         <div class="vin-row">
           <div class="hint" id="vinHint">17 символов, буквы и цифры</div>
-          <button class="scan-btn" id="vinScanBtn" type="button">📷 Скан VIN</button>
+          <div class="scan-group">
+            <button class="scan-btn" id="vinScanCamera" type="button">📷 Сфотографировать</button>
+            <button class="scan-btn ghost" id="vinScanGallery" type="button">🖼️ Из галереи</button>
+          </div>
         </div>
-        <input type="file" id="vinPhotoInput" accept="image/*" capture="environment" style="display:none" />
+        <input type="file" id="vinCameraInput" accept="image/*" capture="environment" style="display:none" />
+        <input type="file" id="vinGalleryInput" accept="image/*" style="display:none" />
         <datalist id="vinList"></datalist>
       </div>
 
@@ -1451,9 +1457,11 @@ details.backup[open] summary::after{content:"▴"}
 
   var $ = function(s){ return document.querySelector(s); };
   var vin = $("#vin");
-  var btn = $("#vinScanBtn");
-  var fileInput = $("#vinPhotoInput");
-  if(!vin || !btn || !fileInput) return;
+  var btnCam = $("#vinScanCamera");
+  var btnGal = $("#vinScanGallery");
+  var camInput = $("#vinCameraInput");
+  var galInput = $("#vinGalleryInput");
+  if(!vin || !btnCam || !btnGal || !camInput || !galInput) return;
 
   var VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
   var WHITELIST = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789";
@@ -1677,13 +1685,25 @@ details.backup[open] summary::after{content:"▴"}
     });
   }
 
-  btn.addEventListener("click", function(){
+  btnCam.addEventListener("click", function(){
     if(busy) return;
-    fileInput.value = "";
-    fileInput.click();
+    camInput.value = "";
+    camInput.click();
   });
 
-  fileInput.addEventListener("change", function(){
+  btnGal.addEventListener("click", function(){
+    if(busy) return;
+    galInput.value = "";
+    galInput.click();
+  });
+
+  camInput.addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    this.value = "";
+    if(f) scan(f);
+  });
+
+  galInput.addEventListener("change", function(){
     var f = this.files && this.files[0];
     this.value = "";
     if(f) scan(f);
