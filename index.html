@@ -306,6 +306,32 @@ details.backup[open] summary::after{content:"▴"}
 </style>
 </head>
 <body>
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-card">
+    <div class="scan-spin"></div>
+    <p class="scan-status" id="scanStatus">Распознаю VIN…</p>
+    <p class="scan-sub" id="scanSub">Держите VIN целиком в кадре</p>
+  </div>
+</div>
+
+<div class="modal" id="scanModal">
+  <div class="sheet">
+    <h3 id="scanTitle">VIN распознан</h3>
+    <div class="vres-vin" id="scanVin">—</div>
+    <p class="vres-hint" id="scanHint">Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S.</p>
+    <div id="scanCandidates" style="display:none"></div>
+    <div class="vres-row">
+      <button class="btn ghost" type="button" id="scanCancel">Отмена</button>
+      <button class="btn" type="button" id="scanApply">Подставить</button>
+    </div>
+    <div class="vres-row" id="scanRetryRow" style="display:none">
+      <button class="btn ghost" type="button" id="scanRetry">📷 Сфотографировать ещё раз</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 
 <header>
   <div class="wrap hrow">
@@ -1664,31 +1690,7 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   });
 }
 </script>
-<div class="scan-overlay" id="scanOverlay">
-  <div class="scan-card">
-    <div class="scan-spin"></div>
-    <p class="scan-status" id="scanStatus">Распознаю VIN…</p>
-    <p class="scan-sub" id="scanSub">Держите VIN целиком в кадре</p>
-  </div>
-</div>
 
-<div class="modal" id="scanModal">
-  <div class="sheet">
-    <h3 id="scanTitle">VIN распознан</h3>
-    <div class="vres-vin" id="scanVin">—</div>
-    <p class="vres-hint" id="scanHint">Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S.</p>
-    <div id="scanCandidates" style="display:none"></div>
-    <div class="vres-row">
-      <button class="btn ghost" type="button" id="scanCancel">Отмена</button>
-      <button class="btn" type="button" id="scanApply">Подставить</button>
-    </div>
-    <div class="vres-row" id="scanRetryRow" style="display:none">
-      <button class="btn ghost" type="button" id="scanRetry">📷 Сфотографировать ещё раз</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 </body>
 </html>
