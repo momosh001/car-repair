@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0f766e" />
+<meta name="description" content="Журнал ремонта авто: VIN, работа, запчасти, фото, клиенты. Работает офлайн." />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Ремонт" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<title>Журнал ремонта авто</title>
+<style>
+:root{
+  --bg:#f1f5f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --accent:#0f766e; --accent-2:#14b8a6; --accent-ink:#ffffff;
+  --chip-work:#fef3c7; --chip-work-ink:#92400e;
+  --chip-done:#dcfce7; --chip-done-ink:#166534;
+  --danger:#dc2626; --radius:16px;
+  --shadow:0 1px 2px rgba(15,23,42,.06), 0 10px 30px -18px rgba(15,23,42,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1220; --card:#111c2e; --ink:#e6edf7; --muted:#8ba0b8; --line:#1e2c42;
+    --chip-work:#3a2c0c; --chip-work-ink:#fbbf24;
+    --chip-done:#0f2f1e; --chip-done-ink:#4ade80;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:16px; line-height:1.45;
+  padding-bottom:calc(88px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+.wrap{max-width:680px; margin:0 auto; padding:0 14px}
+
+/* ---------- шапка ---------- */
+header{
+  position:sticky; top:0; z-index:20;
+  background:linear-gradient(135deg,#0f766e,#0d9488);
+  color:#fff; padding:calc(14px + env(safe-area-inset-top)) 0 14px;
+  box-shadow:0 8px 24px -18px #000;
+}
+.hrow{display:flex; align-items:center; gap:10px}
+.htitle{font-size:19px; font-weight:700; letter-spacing:-.2px; flex:1}
+.hsub{font-size:12.5px; opacity:.85; margin-top:2px}
+.help{
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.14); color:#fff; font-size:17px; font-weight:700;
+  display:grid;place-items:center; cursor:pointer; flex:0 0 auto;
+}
+
+/* ---------- подсказки в шапке ---------- */
+.hnote{
+  display:flex; gap:9px; align-items:flex-start;
+  margin-top:10px; border-radius:12px; padding:10px 12px;
+  font-size:12.5px; font-weight:600; line-height:1.45; text-align:left;
+}
+.hnote.warn{background:#fff1f2; color:#9f1239}
+.hnote.info{background:rgba(255,255,255,.16); color:#fff}
+.hnote .x{
+  margin-left:auto; flex:0 0 auto; border:0; background:transparent;
+  color:inherit; font:inherit; font-size:15px; line-height:1; cursor:pointer; padding:1px 3px;
+}
+.hnote b{font-weight:800}
+
+/* ---------- карточки/поля ---------- */
+.card-box{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:16px; margin-top:14px;
+}
+.field{margin-bottom:13px}
+.field:last-child{margin-bottom:0}
+label{display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:6px}
+input,select,textarea{
+  width:100%; font:inherit; font-size:16px; color:var(--ink);
+  background:var(--card); border:1.5px solid var(--line); border-radius:12px;
+  padding:12px 13px; outline:none; transition:border-color .15s, box-shadow .15s;
+  -webkit-appearance:none; appearance:none;
+}
+textarea{resize:vertical; min-height:88px; line-height:1.4}
+input:focus,select:focus,textarea:focus{border-color:var(--accent-2); box-shadow:0 0 0 3px rgba(20,184,166,.18)}
+input::placeholder,textarea::placeholder{color:var(--muted); opacity:.7}
+#vin{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; letter-spacing:1.5px; text-transform:uppercase}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.hint{font-size:12px; color:var(--muted); margin-top:5px}
+.hint.err{color:var(--danger); font-weight:600}
+
+/* ---------- кнопки ---------- */
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; min-height:52px; border:0; border-radius:14px;
+  font:inherit; font-weight:700; font-size:16.5px; cursor:pointer;
+  background:var(--accent); color:var(--accent-ink); padding:12px 16px;
+  transition:transform .08s, filter .15s; touch-action:manipulation;
+}
+.btn:active{transform:scale(.985); filter:brightness(.95)}
+.btn.ghost{background:transparent; color:var(--ink); border:1.5px solid var(--line)}
+.btn.danger{background:transparent; color:var(--danger); border:1.5px solid var(--danger)}
+.btn-row{display:flex; gap:10px; margin-top:14px}
+.btn-row .btn{flex:1}
+
+/* ---------- вкладки ---------- */
+nav.tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:flex; gap:6px; padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:var(--card);
+  background:color-mix(in srgb, var(--card) 88%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+}
+nav.tabs button{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+  border:0; background:transparent; color:var(--muted); font:inherit;
+  font-size:11.5px; font-weight:700; padding:7px 4px 5px; border-radius:12px; cursor:pointer;
+}
+nav.tabs button .ico{font-size:20px; line-height:1}
+nav.tabs button.on{color:var(--accent); background:rgba(20,184,166,.12)}
+
+/* ---------- поиск ---------- */
+.search{position:relative; margin-top:14px}
+.search input{padding-left:42px; border-radius:14px; background:var(--card); box-shadow:var(--shadow)}
+.search .mag{position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:17px; opacity:.55}
+
+.summary{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  font-size:13px; color:var(--muted); margin:12px 2px 2px;
+}
+.summary b{color:var(--ink); font-size:14px}
+.pill{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:12.5px; font-weight:600; color:var(--ink)}
+
+/* ---------- список ---------- */
+.list{display:flex; flex-direction:column; gap:10px; margin-top:12px}
+.rec{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:13px 14px; box-shadow:var(--shadow); cursor:pointer; position:relative;
+  transition:transform .08s;
+}
+.rec:active{transform:scale(.995)}
+.rec-top{display:flex; align-items:center; gap:8px; margin-bottom:7px; flex-wrap:wrap}
+.rec-date{font-size:12.5px; font-weight:700; color:var(--muted)}
+.chip{font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:999px; letter-spacing:.2px}
+.chip.work{background:var(--chip-work); color:var(--chip-work-ink)}
+.chip.done{background:var(--chip-done); color:var(--chip-done-ink)}
+.rec-cost{margin-left:auto; font-weight:800; font-size:15px; color:var(--accent); white-space:nowrap}
+.rec-vin{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; letter-spacing:.6px; color:var(--accent); font-weight:700; word-break:break-all}
+.rec-car{font-weight:700; font-size:14.5px; margin-top:3px}
+.rec-work{font-size:14px; color:var(--ink); margin:6px 0 0; white-space:pre-wrap; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical}
+.rec-meta{font-size:12.5px; color:var(--muted); margin-top:6px; display:flex; flex-wrap:wrap; gap:10px}
+.rec-actions{display:flex; gap:8px; margin-top:10px; border-top:1px dashed var(--line); padding-top:9px}
+.mini{
+  border:0; background:transparent; color:var(--muted); font:inherit; font-size:13px;
+  font-weight:700; padding:6px 10px; border-radius:9px; cursor:pointer;
+}
+.mini:active{background:rgba(127,127,127,.12)}
+.mini.d{color:var(--danger)}
+
+.empty{text-align:center; color:var(--muted); padding:44px 20px; font-size:15px}
+.empty .big{font-size:40px; display:block; margin-bottom:10px; opacity:.55}
+
+/* ---------- фото ---------- */
+.photo-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px}
+.pthumb{position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:var(--bg); border:1px solid var(--line)}
+.pthumb img{width:100%; height:100%; object-fit:cover; display:block}
+.pthumb .del{
+  position:absolute; top:4px; right:4px; width:26px; height:26px; border-radius:50%;
+  border:0; background:rgba(15,23,42,.72); color:#fff; font-size:15px; line-height:1;
+  display:grid; place-items:center; cursor:pointer;
+}
+.btn.small{min-height:46px; font-size:14.5px; margin-bottom:6px}
+.rec-photos{display:flex; gap:6px; margin-top:9px; align-items:center}
+.rec-photos img{
+  width:62px; height:62px; object-fit:cover; border-radius:10px;
+  border:1px solid var(--line); display:block; background:var(--bg); cursor:zoom-in;
+}
+.rec-photos .more{
+  width:62px; height:62px; border-radius:10px; border:1px dashed var(--line);
+  display:grid; place-items:center; font-size:12.5px; font-weight:800; color:var(--muted); background:var(--bg);
+}
+
+/* ---------- клиенты ---------- */
+.client{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:13px 14px; box-shadow:var(--shadow); cursor:pointer;
+  display:flex; gap:11px; align-items:flex-start;
+}
+.client:active{transform:scale(.995)}
+.avatar{
+  width:44px; height:44px; border-radius:50%; flex:0 0 auto;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff;
+  display:grid; place-items:center; font-weight:800; font-size:16px; text-transform:uppercase;
+}
+.client-main{flex:1; min-width:0}
+.client-name{font-weight:800; font-size:15.5px}
+.client-phone{font-size:13px; color:var(--accent); font-weight:700; margin-top:1px}
+.client-cars{
+  font-size:12.5px; color:var(--muted); margin-top:5px; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+.client-side{text-align:right; flex:0 0 auto}
+.client-sum{font-weight:800; font-size:14px; color:var(--accent); white-space:nowrap}
+.client-visits{font-size:12px; color:var(--muted); white-space:nowrap}
+.detail-block{margin-bottom:4px}
+.crow{display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px}
+.crow:last-child{border-bottom:0}
+.clabel{color:var(--muted); font-size:12.5px}
+
+/* ---------- просмотр фото ---------- */
+.viewer{position:fixed; inset:0; z-index:90; background:#000; display:none; align-items:center; justify-content:center}
+.viewer.on{display:flex}
+.viewer img{max-width:100%; max-height:100%; object-fit:contain}
+.viewer .x{
+  position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px;
+  width:44px; height:44px; border-radius:50%; border:0;
+  background:rgba(255,255,255,.16); color:#fff; font-size:22px; display:grid; place-items:center; cursor:pointer;
+}
+
+/* ---------- прочее ---------- */
+.banner{
+  background:var(--chip-work); color:var(--chip-work-ink); border-radius:12px;
+  padding:11px 13px; font-size:13.5px; font-weight:700; margin-top:14px;
+  display:flex; align-items:center; gap:8px;
+}
+.toast{
+  position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translate(-50%, 20px);
+  background:#0f172a; color:#fff; padding:12px 18px; border-radius:12px; font-size:14px; font-weight:600;
+  opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60; max-width:88vw; text-align:center;
+}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+details.backup{margin-top:16px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); overflow:hidden}
+details.backup summary{padding:14px 16px; font-weight:700; font-size:14.5px; cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px}
+details.backup summary::-webkit-details-marker{display:none}
+details.backup summary::after{content:"▾"; margin-left:auto; color:var(--muted)}
+details.backup[open] summary::after{content:"▴"}
+.backup-body{padding:0 16px 16px; display:flex; flex-direction:column; gap:9px}
+.backup-body .btn{min-height:46px; font-size:14.5px}
+.tiny{font-size:12px; color:var(--muted); text-align:center; padding:18px 10px 4px; line-height:1.5}
+
+/* ---------- модалка помощи ---------- */
+.modal{
+  position:fixed; inset:0; z-index:80; background:rgba(2,6,23,.55);
+  display:none; align-items:flex-end; justify-content:center; padding:0;
+}
+.modal.on{display:flex}
+.sheet{
+  background:var(--card); width:100%; max-width:680px; max-height:88vh; overflow:auto;
+  border-radius:20px 20px 0 0; padding:20px 18px calc(22px + env(safe-area-inset-bottom));
+  animation:up .22s ease-out;
+}
+@keyframes up{from{transform:translateY(30px); opacity:.6} to{transform:none; opacity:1}}
+.sheet h3{margin:0 0 12px; font-size:18px}
+.sheet ol{margin:0 0 14px; padding-left:20px; font-size:14.5px; color:var(--ink)}
+.sheet li{margin-bottom:9px}
+.sheet .note{font-size:13px; color:var(--muted); background:var(--bg); border-radius:12px; padding:11px 13px; margin-bottom:14px}
+.views{display:none}
+.views.on{display:block}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hrow">
+    <div style="flex:1">
+      <div class="htitle">Журнал ремонта</div>
+      <div class="hsub" id="hsub">Записей: 0</div>
+    </div>
+    <button class="help" id="helpBtn" aria-label="Помощь">?</button>
+  </div>
+  <div class="wrap">
+    <div class="hnote warn" id="storageWarn" style="display:none">
+      <span aria-hidden="true">⚠️</span>
+      <span><b>Записи не сохраняются.</b> Браузер запретил доступ к памяти — так бывает, когда файл открыт как локальный или включён Приватный режим. Откройте приложение по ссылке и добавьте на главный экран — тогда всё сохраняется.</span>
+    </div>
+    <div class="hnote info" id="installHint" style="display:none">
+      <span aria-hidden="true">📱</span>
+      <span><b>Запускайте с иконки.</b> На iPhone: «Поделиться» → «На экран „Домой“». У иконки и у вкладки Safari разное хранилище: записи из браузера в иконку не переносятся.</span>
+      <button class="x" id="hideHint" type="button" aria-label="Скрыть подсказку">✕</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= НОВАЯ ЗАПИСЬ ================= -->
+  <section id="view-new" class="views on">
+    <div id="editBanner" class="banner" style="display:none">✏️ Редактирование записи</div>
+
+    <form id="form" class="card-box" autocomplete="off" novalidate>
+      <div class="field">
+        <label for="vin">VIN номер</label>
+        <input id="vin" name="vin" type="text" inputmode="text" maxlength="17"
+               placeholder="Например XTA21150053912345" autocapitalize="characters" spellcheck="false" />
+        <div class="hint" id="vinHint">17 символов, буквы и цифры</div>
+        <datalist id="vinList"></datalist>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="date">Дата</label>
+          <input id="date" name="date" type="date" />
+        </div>
+        <div class="field">
+          <label for="mileage">Пробег, км</label>
+          <input id="mileage" name="mileage" type="number" inputmode="numeric" placeholder="120000" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="car">Машина (марка / модель)</label>
+        <input id="car" name="car" type="text" placeholder="Лада Веста, Kia Rio…" />
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="plate">Госномер</label>
+          <input id="plate" name="plate" type="text" placeholder="А123ВС777" autocapitalize="characters" />
+        </div>
+        <div class="field">
+          <label for="cost">Стоимость, ₽</label>
+          <input id="cost" name="cost" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="work">Что ремонтировал *</label>
+        <textarea id="work" name="work" placeholder="Замена масла и масляного фильтра, замена передних колодок…"></textarea>
+        <div class="hint err" id="workErr" style="display:none">Напишите, что было сделано</div>
+      </div>
+
+      <div class="field">
+        <label for="parts">Запчасти / материалы</label>
+        <textarea id="parts" name="parts" placeholder="Масло 5W-40 4л, фильтр Mann W914/2, колодки TRW…" style="min-height:64px"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Фото (до 6)</label>
+        <div class="photo-grid" id="photoGrid"></div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none" />
+        <button class="btn ghost small" type="button" id="addPhoto">📷 Добавить фото</button>
+        <div class="hint">Можно снять на камеру или выбрать из галереи. Фото сжимаются автоматически.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="client">Клиент</label>
+          <input id="client" name="client" type="text" placeholder="Имя" />
+        </div>
+        <div class="field">
+          <label for="phone">Телефон</label>
+          <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+7…" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="status">Статус</label>
+        <select id="status" name="status">
+          <option value="done">Готово</option>
+          <option value="work">В работе</option>
+        </select>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" type="submit" id="saveBtn">Сохранить</button>
+        <button class="btn ghost" type="button" id="cancelEdit" style="display:none; flex:0 0 40%">Отмена</button>
+      </div>
+    </form>
+
+    <p class="tiny">Данные хранятся только на этом телефоне. Делайте резервную копию во вкладке «История».</p>
+  </section>
+
+  <!-- ================= ИСТОРИЯ ================= -->
+  <section id="view-list" class="views">
+    <div class="search">
+      <span class="mag">🔍</span>
+      <input id="q" type="search" placeholder="Поиск: VIN, номер, работа…" autocomplete="off" />
+    </div>
+
+    <div class="summary" id="summary" style="display:none"></div>
+    <div class="list" id="list"></div>
+
+    <details class="backup">
+      <summary>💾 Сохранить / выгрузить</summary>
+      <div class="backup-body">
+        <button class="btn ghost" id="expCsv" type="button">📊 Скачать таблицу (CSV для Excel / Google)</button>
+        <button class="btn ghost" id="expJson" type="button">🗄 Резервная копия (JSON)</button>
+        <button class="btn ghost" id="impBtn" type="button">📥 Восстановить из копии</button>
+        <input type="file" id="impFile" accept=".json,application/json" style="display:none" />
+        <button class="btn danger" id="clearAll" type="button">Удалить все записи</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= КЛИЕНТЫ ================= -->
+  <section id="view-clients" class="views">
+    <div class="summary" id="clientSummary" style="display:none"></div>
+    <div class="list" id="clientList"></div>
+    <p class="tiny">Клиенты собираются автоматически из записей: достаточно указать имя или телефон. Нажмите на клиента, чтобы увидеть его машины, ремонты и позвонить.</p>
+  </section>
+
+</main>
+
+<nav class="tabs">
+  <button id="tabNew" class="on" type="button"><span class="ico">➕</span>Новая запись</button>
+  <button id="tabList" type="button"><span class="ico">📋</span>История</button>
+  <button id="tabClients" type="button"><span class="ico">👥</span>Клиенты</button>
+</nav>
+
+<div class="viewer" id="viewer">
+  <button class="x" type="button" id="viewerClose" aria-label="Закрыть">✕</button>
+  <img id="viewerImg" alt="Фото" />
+</div>
+
+<div class="modal" id="clientModal">
+  <div class="sheet">
+    <div id="clientBody"></div>
+    <button class="btn ghost" id="closeClient" type="button">Закрыть</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>Как пользоваться</h3>
+    <ol>
+      <li><b>Установка на iPhone.</b> Откройте <b>ссылку</b> на приложение в Safari → кнопка «Поделиться» (⬆) → «На экран „Домой“». Появится иконка «Ремонт». Запускайте приложение только с иконки: у иконки и у вкладки Safari разное хранилище, поэтому записи из браузера в иконку сами не переносятся.</li>
+      <li><b>Новая запись:</b> VIN, что ремонтировали, стоимость, фото → «Сохранить». Дату браузер подставит сам.</li>
+      <li><b>Фото:</b> кнопка «📷 Добавить фото» — можно снять на камеру или выбрать из галереи. Нажмите на миниатюру в истории, чтобы открыть на весь экран.</li>
+      <li><b>История:</b> все записи. Введите VIN в поиск — увидите всю историю ремонта этой машины и общую сумму.</li>
+      <li><b>Клиенты:</b> собираются сами по имени и телефону. Внутри карточки — машины, ремонты, сумма и кнопка «Позвонить».</li>
+      <li>Нажмите на запись, чтобы исправить. Кнопка «Удалить» — внутри записи.</li>
+      <li><b>Google Таблицы:</b> «История» → «Скачать таблицу (CSV)» → откройте файл в Google Таблицах (или загрузите на drive.google.com → «Открыть с помощью Google Таблиц»).</li>
+    </ol>
+    <div class="note" id="helpStorage">Хранилище: проверяем…</div>
+    <div class="note">⚠️ Записи и фото хранятся в памяти этого телефона. Не удаляйте иконку с главного экрана — вместе с ней удаляются и записи. Не очищайте данные браузера. Раз в неделю делайте «Резервную копию (JSON)» — фото входят в копию — и отправляйте себе в мессенджер.</div>
+    <button class="btn" id="closeModal" type="button">Понятно</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = "carRepair.v1";
+  var KEY_TAB = "carRepair.tab";
+  var KEY_HINT = "carRepair.hideHint";
+  var $ = function(s){ return document.querySelector(s); };
+
+  var records = [];
+  var editingId = null;
+  var query = "";
+
+  /* ---------- проверка памяти (на iPhone это критично) ---------- */
+  var STORAGE_OK = (function(){
+    try{
+      var probe = "__cr_probe__";
+      localStorage.setItem(probe, "1");
+      var ok = localStorage.getItem(probe) === "1";
+      localStorage.removeItem(probe);
+      return ok;
+    }catch(e){ return false; }
+  })();
+  var IS_STANDALONE = (window.navigator.standalone === true) ||
+    !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  /* ---------- хранилище ---------- */
+  function load(){
+    if(!STORAGE_OK) return [];
+    try{
+      var raw = localStorage.getItem(KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      if(!Array.isArray(arr)) return [];
+      return arr.filter(function(r){ return r && typeof r === "object"; }).map(function(r){
+        return {
+          id: r.id || uid(),
+          vin: str(r.vin).toUpperCase(),
+          date: str(r.date) || today(),
+          car: str(r.car),
+          plate: str(r.plate).toUpperCase(),
+          mileage: str(r.mileage),
+          client: str(r.client),
+          phone: str(r.phone),
+          work: str(r.work),
+          parts: str(r.parts),
+          cost: str(r.cost),
+          photos: Array.isArray(r.photos) ? r.photos.filter(function(x){ return typeof x === "string"; }) : [],
+          status: r.status === "work" ? "work" : "done",
+          created: Number(r.created) || Date.now(),
+          updated: Number(r.updated) || Number(r.created) || Date.now()
+        };
+      });
+    }catch(e){ return []; }
+  }
+  function persist(){
+    if(!STORAGE_OK){
+      showStorageWarn();
+      toast("⚠️ Сохранение недоступно — запись останется только до закрытия страницы");
+      return false;
+    }
+    try{
+      localStorage.setItem(KEY, JSON.stringify(records));
+      return true;
+    }catch(e){
+      STORAGE_OK = false;
+      showStorageWarn();
+      toast("Не удалось сохранить: память браузера переполнена");
+      return false;
+    }
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function str(v){ return v == null ? "" : String(v).trim(); }
+  function today(){
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function money(v){
+    var n = parseFloat(String(v).replace(",", "."));
+    if(!isFinite(n) || n === 0) return "";
+    return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(n) + " ₽";
+  }
+  function moneySum(v){
+    return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(v)) + " ₽";
+  }
+  function dmy(iso){
+    if(!iso || iso.length < 10) return iso || "";
+    return iso.slice(8, 10) + "." + iso.slice(5, 7) + "." + iso.slice(0, 4);
+  }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ---------- фото: IndexedDB ---------- */
+  var MAX_PHOTOS = 6;
+  var pendingPhotos = [];        // [{id, blob, url}]
+  var originalPhotoIds = [];     // фото, которые были у записи при открытии на редактирование
+  var photosLoadPromise = Promise.resolve();
+  var photoJobs = Promise.resolve();
+  var photoSession = 0;
+  var photoURLCache = {};
+  var dbPromise = null;
+
+  function openDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise(function(resolve, reject){
+      if(!window.indexedDB){ reject(new Error("no idb")); return; }
+      var req = indexedDB.open("carRepairDB", 1);
+      req.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if(!db.objectStoreNames.contains("photos")) db.createObjectStore("photos", { keyPath: "id" });
+      };
+      req.onsuccess = function(e){ resolve(e.target.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return dbPromise;
+  }
+
+  function idbPut(id, blob){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("photos", "readwrite");
+        tx.objectStore("photos").put({ id: id, blob: blob, created: Date.now() });
+        tx.oncomplete = function(){ resolve(id); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  function idbGet(id){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("photos", "readonly");
+        var req = tx.objectStore("photos").get(id);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+
+  function idbDel(ids){
+    if(!ids || !ids.length) return Promise.resolve();
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("photos", "readwrite");
+        var store = tx.objectStore("photos");
+        ids.forEach(function(id){ store.delete(id); });
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  function idbClear(){
+    return openDB().then(function(db){
+      return new Promise(function(resolve){
+        var tx = db.transaction("photos", "readwrite");
+        tx.objectStore("photos").clear();
+        tx.oncomplete = resolve;
+        tx.onerror = resolve;
+      });
+    }).catch(function(){});
+  }
+
+  function photoURL(id){
+    if(photoURLCache[id]) return Promise.resolve(photoURLCache[id]);
+    return idbGet(id).then(function(rec){
+      if(!rec || !rec.blob) return "";
+      var u = URL.createObjectURL(rec.blob);
+      photoURLCache[id] = u;
+      return u;
+    }).catch(function(){ return ""; });
+  }
+
+  function revokeCached(id){
+    if(photoURLCache[id]){
+      URL.revokeObjectURL(photoURLCache[id]);
+      delete photoURLCache[id];
+    }
+  }
+
+  function compressImage(file, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        try{
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          var scale = Math.min(1, maxSide / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale));
+          var ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw;
+          canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          canvas.toBlob(function(blob){
+            URL.revokeObjectURL(url);
+            if(blob) resolve(blob); else reject(new Error("no blob"));
+          }, "image/jpeg", quality);
+        }catch(err){
+          URL.revokeObjectURL(url);
+          reject(err);
+        }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("bad image")); };
+      img.src = url;
+    });
+  }
+
+  function addPhotoFiles(files){
+    if(!files || !files.length) return photoJobs;
+    var room = MAX_PHOTOS - pendingPhotos.length;
+    if(room <= 0){ toast("Максимум " + MAX_PHOTOS + " фото на запись"); return photoJobs; }
+    var list = Array.prototype.slice.call(files).slice(0, room);
+    var session = photoSession;
+
+    photoJobs = list.reduce(function(prev, file){
+      return prev.then(function(){
+        return compressImage(file, 1100, 0.72).then(function(blob){
+          if(session !== photoSession) return;
+          pendingPhotos.push({ id: "ph_" + uid(), blob: blob, url: URL.createObjectURL(blob) });
+          renderPhotoGrid();
+        }).catch(function(){ toast("Не удалось обработать фото"); });
+      });
+    }, photoJobs);
+
+    return photoJobs;
+  }
+
+  function renderPhotoGrid(){
+    var g = $("#photoGrid");
+    if(!g) return;
+    g.innerHTML = pendingPhotos.map(function(p, i){
+      return '<div class="pthumb"><img src="' + p.url + '" alt="фото">' +
+        '<button class="del" type="button" data-photo-del="' + i + '" aria-label="Удалить фото">×</button></div>';
+    }).join("");
+    var add = $("#addPhoto");
+    if(add) add.style.display = pendingPhotos.length >= MAX_PHOTOS ? "none" : "flex";
+  }
+
+  function loadPhotosFor(ids){
+    photoSession++;
+    pendingPhotos.forEach(function(p){ if(p.url) URL.revokeObjectURL(p.url); });
+    pendingPhotos = [];
+    originalPhotoIds = (ids || []).slice();
+    renderPhotoGrid();
+    photosLoadPromise = Promise.all(originalPhotoIds.map(function(id){
+      return idbGet(id).then(function(rec){
+        if(!rec || !rec.blob) return;
+        pendingPhotos.push({ id: id, blob: rec.blob, url: URL.createObjectURL(rec.blob) });
+        renderPhotoGrid();
+      }).catch(function(){});
+    }));
+    return photosLoadPromise;
+  }
+
+  function hydratePhotos(){
+    var imgs = document.querySelectorAll("img[data-photo]");
+    Array.prototype.forEach.call(imgs, function(img){
+      var pid = img.getAttribute("data-photo");
+      photoURL(pid).then(function(u){
+        if(u){ img.src = u; }
+        else { img.style.opacity = "0.25"; }
+      });
+    });
+  }
+
+  function openViewer(src){
+    $("#viewerImg").src = src;
+    $("#viewer").classList.add("on");
+  }
+  function closeViewer(){
+    $("#viewer").classList.remove("on");
+    $("#viewerImg").removeAttribute("src");
+  }
+
+  function blobToDataURL(blob){
+    return new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(){ resolve(String(fr.result)); };
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  function dataURLToBlob(u){
+    var parts = String(u).split(",");
+    var mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/jpeg";
+    var bin = atob(parts[1]);
+    var arr = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  /* ---------- уведомления ---------- */
+  var toastTimer = null;
+  function toast(msg){
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("on"); }, 2200);
+  }
+
+  /* ---------- вкладки ---------- */
+  function showView(name){
+    [["new", "#view-new", "#tabNew"], ["list", "#view-list", "#tabList"], ["clients", "#view-clients", "#tabClients"]]
+      .forEach(function(v){
+        var on = v[0] === name;
+        $(v[1]).classList.toggle("on", on);
+        $(v[2]).classList.toggle("on", on);
+      });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if(name === "list") renderList();
+    if(name === "clients") renderClients();
+    try{ if(STORAGE_OK) localStorage.setItem(KEY_TAB, name); }catch(e){}
+  }
+  $("#tabNew").addEventListener("click", function(){
+    if(editingId) exitEdit(); else resetForm();
+    showView("new");
+  });
+  $("#tabList").addEventListener("click", function(){ showView("list"); });
+  $("#tabClients").addEventListener("click", function(){ showView("clients"); });
+
+  /* ---------- форма ---------- */
+  function resetForm(){
+    editingId = null;
+    $("#form").reset();
+    $("#date").value = today();
+    $("#status").value = "done";
+    $("#editBanner").style.display = "none";
+    $("#saveBtn").textContent = "Сохранить";
+    $("#cancelEdit").style.display = "none";
+    $("#workErr").style.display = "none";
+    pendingPhotos.forEach(function(p){ if(p.url) URL.revokeObjectURL(p.url); });
+    pendingPhotos = [];
+    originalPhotoIds = [];
+    photoSession++;
+    photoJobs = Promise.resolve();
+    photosLoadPromise = Promise.resolve();
+    renderPhotoGrid();
+    updateVinHint();
+  }
+
+  function fillForm(r){
+    editingId = r.id;
+    $("#vin").value = r.vin;
+    $("#date").value = r.date || today();
+    $("#car").value = r.car;
+    $("#plate").value = r.plate;
+    $("#mileage").value = r.mileage;
+    $("#client").value = r.client;
+    $("#phone").value = r.phone;
+    $("#work").value = r.work;
+    $("#parts").value = r.parts;
+    $("#cost").value = r.cost;
+    $("#status").value = r.status;
+    $("#editBanner").style.display = "flex";
+    $("#saveBtn").textContent = "Сохранить изменения";
+    $("#cancelEdit").style.display = "flex";
+    $("#workErr").style.display = "none";
+    loadPhotosFor(r.photos || []);
+    updateVinHint();
+  }
+
+  function exitEdit(){
+    resetForm();
+    showView("list");
+  }
+  $("#cancelEdit").addEventListener("click", exitEdit);
+
+  var vinEl = $("#vin");
+  vinEl.addEventListener("input", function(){
+    var pos = vinEl.selectionStart;
+    var cleaned = vinEl.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 17);
+    if(vinEl.value !== cleaned){
+      vinEl.value = cleaned;
+      try{ vinEl.setSelectionRange(pos, pos); }catch(e){}
+    }
+    updateVinHint();
+  });
+  vinEl.addEventListener("change", autofillFromVin);
+
+  function updateVinHint(){
+    var v = vinEl.value;
+    var el = $("#vinHint");
+    if(!v){ el.className = "hint"; el.textContent = "17 символов, буквы и цифры"; return; }
+    if(v.length === 17){ el.className = "hint"; el.textContent = "VIN полный ✓"; }
+    else { el.className = "hint"; el.textContent = "Введено " + v.length + " из 17 символов"; }
+  }
+
+  function autofillFromVin(){
+    if(editingId) return;
+    var v = vinEl.value.trim();
+    if(v.length < 6) return;
+    var found = null;
+    for(var i = 0; i < records.length; i++){
+      var r = records[i];
+      if(r.vin && r.vin === v && (r.car || r.plate)){
+        if(!found || (r.updated || 0) > (found.updated || 0)) found = r;
+      }
+    }
+    if(!found) return;
+    var filled = false;
+    [["#car", found.car], ["#plate", found.plate], ["#client", found.client], ["#phone", found.phone]].forEach(function(pair){
+      var el = $(pair[0]);
+      if(!el.value && pair[1]){ el.value = pair[1]; filled = true; }
+    });
+    if(filled) toast("Данные машины подставлены автоматически");
+  }
+
+  $("#form").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    var work = str($("#work").value);
+    if(!work){
+      $("#workErr").style.display = "block";
+      $("#work").focus();
+      toast("Напишите, что ремонтировали");
+      return;
+    }
+    $("#workErr").style.display = "none";
+
+    var data = {
+      vin: str($("#vin").value).toUpperCase(),
+      date: str($("#date").value) || today(),
+      car: str($("#car").value),
+      plate: str($("#plate").value).toUpperCase(),
+      mileage: str($("#mileage").value),
+      client: str($("#client").value),
+      phone: str($("#phone").value),
+      work: work,
+      parts: str($("#parts").value),
+      cost: str($("#cost").value),
+      status: $("#status").value === "work" ? "work" : "done"
+    };
+
+    Promise.all([photosLoadPromise, photoJobs]).then(function(){ finishSave(data); });
+  });
+
+  function finishSave(data){
+    var keepIds = pendingPhotos.map(function(p){ return p.id; });
+    var removed = originalPhotoIds.filter(function(id){ return keepIds.indexOf(id) < 0; });
+
+    var writes = pendingPhotos.map(function(p){
+      return idbPut(p.id, p.blob).catch(function(){ return null; });
+    });
+
+    Promise.all(writes).then(function(){
+      idbDel(removed).catch(function(){});
+      removed.forEach(revokeCached);
+
+      data.photos = keepIds;
+
+      if(editingId){
+        var idx = records.findIndex(function(r){ return r.id === editingId; });
+        if(idx > -1) records[idx] = Object.assign({}, records[idx], data, { updated: Date.now() });
+        var okEdit = persist();
+        toast(okEdit ? "Изменения сохранены" : "⚠️ Изменения не сохранены — память недоступна");
+      }else{
+        data.id = uid();
+        data.created = Date.now();
+        data.updated = Date.now();
+        records.push(data);
+        var okNew = persist();
+        toast(okNew ? "Запись добавлена" : "⚠️ Запись не сохранена — память недоступна");
+      }
+      resetForm();
+      query = "";
+      $("#q").value = "";
+      showView("list");
+      renderAll();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  /* ---------- список ---------- */
+  function filtered(){
+    var q = query.trim().toLowerCase();
+    var arr = records.slice();
+    if(q){
+      arr = arr.filter(function(r){
+        return [r.vin, r.car, r.plate, r.work, r.parts, r.client, r.phone, r.date, dmy(r.date)]
+          .some(function(v){ return String(v || "").toLowerCase().indexOf(q) > -1; });
+      });
+    }
+    arr.sort(function(a, b){
+      var d = String(b.date || "").localeCompare(String(a.date || ""));
+      if(d !== 0) return d;
+      return (b.created || 0) - (a.created || 0);
+    });
+    return arr;
+  }
+
+  function renderList(){
+    var items = filtered();
+    var list = $("#list");
+    var summary = $("#summary");
+
+    if(items.length){
+      var total = items.reduce(function(s, r){
+        var n = parseFloat(String(r.cost).replace(",", "."));
+        return s + (isFinite(n) ? n : 0);
+      }, 0);
+      summary.style.display = "flex";
+      summary.innerHTML =
+        '<span class="pill">' + items.length + ' ' + plural(items.length, "запись", "записи", "записей") + '</span>' +
+        (total > 0 ? '<span class="pill">Итого: <b>' + moneySum(total) + '</b></span>' : "") +
+        (query.trim() ? '<span class="pill">поиск: ' + esc(query.trim()) + '</span>' : "");
+    }else{
+      summary.style.display = "none";
+    }
+
+    if(!items.length){
+      list.innerHTML = '<div class="empty"><span class="big">🔧</span>' +
+        (query.trim() ? "Ничего не найдено.<br>Попробуйте другой VIN или номер." : "Пока пусто.<br>Нажмите «Новая запись», чтобы добавить первый ремонт.") +
+        "</div>";
+      return;
+    }
+
+    list.innerHTML = items.map(function(r){
+      var meta = [];
+      if(r.mileage) meta.push("🛣 " + esc(r.mileage) + " км");
+      if(r.client) meta.push("👤 " + esc(r.client));
+      if(r.phone) meta.push("📞 " + esc(r.phone));
+
+      return '<article class="rec" data-id="' + r.id + '">' +
+        '<div class="rec-top">' +
+          '<span class="rec-date">' + esc(dmy(r.date)) + '</span>' +
+          '<span class="chip ' + (r.status === "work" ? "work" : "done") + '">' + (r.status === "work" ? "В работе" : "Готово") + '</span>' +
+          (money(r.cost) ? '<span class="rec-cost">' + money(r.cost) + '</span>' : "") +
+        '</div>' +
+        (r.vin ? '<div class="rec-vin">' + esc(r.vin) + '</div>' : "") +
+        ((r.car || r.plate) ? '<div class="rec-car">' + esc([r.car, r.plate].filter(Boolean).join(" · ")) + '</div>' : "") +
+        '<p class="rec-work">' + esc(r.work) + '</p>' +
+        (r.parts ? '<div class="rec-meta"><span>🧰 ' + esc(r.parts) + '</span></div>' : "") +
+        (meta.length ? '<div class="rec-meta">' + meta.map(function(m){ return "<span>" + m + "</span>"; }).join("") + '</div>' : "") +
+        (r.photos && r.photos.length ? '<div class="rec-photos">' +
+          r.photos.slice(0, 3).map(function(pid){
+            return '<img data-photo="' + pid + '" data-view="' + pid + '" alt="фото">';
+          }).join("") +
+          (r.photos.length > 3 ? '<span class="more">+' + (r.photos.length - 3) + '</span>' : "") +
+        '</div>' : "") +
+        '<div class="rec-actions">' +
+          '<button class="mini" type="button" data-act="edit">✏️ Изменить</button>' +
+          '<button class="mini d" type="button" data-act="del">🗑 Удалить</button>' +
+        '</div>' +
+      '</article>';
+    }).join("");
+
+    hydratePhotos();
+  }
+
+  function plural(n, one, few, many){
+    var n10 = n % 10, n100 = n % 100;
+    if(n10 === 1 && n100 !== 11) return one;
+    if(n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return few;
+    return many;
+  }
+
+  $("#list").addEventListener("click", function(e){
+    var pv = e.target.closest ? e.target.closest("[data-view]") : null;
+    if(pv){
+      var pid = pv.getAttribute("data-view");
+      photoURL(pid).then(function(u){ if(u) openViewer(u); });
+      return;
+    }
+    var card = e.target.closest(".rec");
+    if(!card) return;
+    var id = card.getAttribute("data-id");
+    if(e.target.closest('[data-act="del"]')){ removeRecord(id); return; }
+    var rec = records.filter(function(r){ return r.id === id; })[0];
+    if(!rec) return;
+    fillForm(rec);
+    showView("new");
+  });
+
+  function removeRecord(id){
+    var rec = records.filter(function(r){ return r.id === id; })[0];
+    if(!rec) return;
+    var label = rec.vin || rec.car || rec.work.slice(0, 30);
+    if(!confirm("Удалить запись «" + label + "» от " + dmy(rec.date) + "?")) return;
+    records = records.filter(function(r){ return r.id !== id; });
+    persist();
+    (rec.photos || []).forEach(revokeCached);
+    idbDel(rec.photos || []).catch(function(){});
+    renderAll();
+    if(editingId === id) resetForm();
+    toast("Запись удалена");
+  }
+
+  $("#q").addEventListener("input", function(){
+    query = this.value;
+    renderList();
+  });
+
+  /* ---------- клиенты ---------- */
+  function digits(s){ return String(s || "").replace(/\D/g, ""); }
+
+  function buildClients(){
+    var map = {};
+    records.forEach(function(r){
+      var name = (r.client || "").trim();
+      var phone = (r.phone || "").trim();
+      if(!name && !phone) return;
+      var key = digits(phone) || ("n:" + name.toLowerCase());
+      if(!map[key]) map[key] = { key: key, name: name, phone: phone, cars: {}, visits: 0, total: 0, last: "", recs: [] };
+      var c = map[key];
+      if(name) c.name = name;
+      if(phone) c.phone = phone;
+      var carKey = r.vin || r.car || "—";
+      if(!c.cars[carKey]) c.cars[carKey] = { vin: r.vin || "", car: r.car || "", plate: r.plate || "" };
+      else if(r.car) c.cars[carKey].car = c.cars[carKey].car || r.car;
+      c.visits += 1;
+      var n = parseFloat(String(r.cost).replace(",", "."));
+      if(isFinite(n)) c.total += n;
+      if(!c.last || String(r.date) > c.last) c.last = String(r.date);
+      c.recs.push(r);
+    });
+    return Object.keys(map).map(function(k){ return map[k]; }).sort(function(a, b){
+      return String(b.last).localeCompare(String(a.last));
+    });
+  }
+
+  function renderClients(){
+    var list = buildClients();
+    var box = $("#clientList");
+    var sum = $("#clientSummary");
+
+    if(!list.length){
+      sum.style.display = "none";
+      box.innerHTML = '<div class="empty"><span class="big">👥</span>Клиентов пока нет.<br>Впишите имя или телефон в запись — клиент появится здесь сам.</div>';
+      return;
+    }
+
+    var totalAll = list.reduce(function(s, c){ return s + c.total; }, 0);
+    sum.style.display = "flex";
+    sum.innerHTML =
+      '<span class="pill">' + list.length + ' ' + plural(list.length, "клиент", "клиента", "клиентов") + '</span>' +
+      (totalAll > 0 ? '<span class="pill">Всего: <b>' + moneySum(totalAll) + '</b></span>' : "");
+
+    box.innerHTML = list.map(function(c){
+      var cars = Object.keys(c.cars).map(function(k){
+        var x = c.cars[k];
+        return [x.car, x.plate].filter(Boolean).join(" ") || x.vin || "авто";
+      });
+      var initials = (c.name || "?").trim().charAt(0).toUpperCase();
+      return '<article class="client" data-key="' + esc(c.key) + '">' +
+        '<div class="avatar">' + esc(initials) + '</div>' +
+        '<div class="client-main">' +
+          '<div class="client-name">' + esc(c.name || "Без имени") + '</div>' +
+          (c.phone ? '<div class="client-phone">' + esc(c.phone) + '</div>' : "") +
+          '<div class="client-cars">' + esc(cars.slice(0, 2).join(" · ")) + (cars.length > 2 ? " и ещё " + (cars.length - 2) : "") + '</div>' +
+        '</div>' +
+        '<div class="client-side">' +
+          '<div class="client-sum">' + (c.total > 0 ? moneySum(c.total) : "—") + '</div>' +
+          '<div class="client-visits">' + c.visits + " " + plural(c.visits, "визит", "визита", "визитов") + '</div>' +
+        '</div>' +
+      '</article>';
+    }).join("");
+  }
+
+  $("#clientList").addEventListener("click", function(e){
+    var el = e.target.closest ? e.target.closest("[data-key]") : null;
+    if(el) openClient(el.getAttribute("data-key"));
+  });
+
+  function openClient(key){
+    var c = buildClients().filter(function(x){ return x.key === key; })[0];
+    if(!c) return;
+
+    var carsHtml = Object.keys(c.cars).map(function(k){
+      var x = c.cars[k];
+      return '<div class="crow"><div>' +
+        '<div style="font-weight:700">' + esc([x.car, x.plate].filter(Boolean).join(" · ") || "Автомобиль") + '</div>' +
+        (x.vin ? '<div class="clabel" style="font-family:ui-monospace,monospace">' + esc(x.vin) + '</div>' : "") +
+      '</div></div>';
+    }).join("");
+
+    var recsHtml = c.recs.slice().sort(function(a, b){
+      return String(b.date).localeCompare(String(a.date));
+    }).map(function(r){
+      return '<div class="crow"><div>' +
+        '<div style="font-weight:600">' + esc(dmy(r.date)) + ' — ' + esc(r.work) + '</div>' +
+        (money(r.cost) || r.car ? '<div class="clabel">' + [money(r.cost), r.car].filter(Boolean).map(esc).join(" · ") + '</div>' : "") +
+      '</div></div>';
+    }).join("");
+
+    $("#clientBody").innerHTML =
+      '<h3>' + esc(c.name || "Без имени") + '</h3>' +
+      (c.phone ? '<a class="btn" href="tel:' + esc(digits(c.phone)) + '" style="text-decoration:none;margin-bottom:16px">📞 Позвонить · ' + esc(c.phone) + '</a>' : "") +
+      '<div class="detail-block"><div class="clabel" style="margin-bottom:2px">АВТОМОБИЛИ</div>' + (carsHtml || '<div class="clabel">—</div>') + '</div>' +
+      '<div class="detail-block" style="margin-top:16px"><div class="clabel" style="margin-bottom:2px">РЕМОНТЫ · ' + (c.total > 0 ? moneySum(c.total) : "—") + '</div>' + (recsHtml || '<div class="clabel">—</div>') + '</div>';
+
+    $("#clientModal").classList.add("on");
+  }
+
+  $("#closeClient").addEventListener("click", function(){ $("#clientModal").classList.remove("on"); });
+  $("#clientModal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
+
+  /* ---------- фото: кнопки ---------- */
+  $("#addPhoto").addEventListener("click", function(){ $("#photoInput").click(); });
+
+  $("#photoInput").addEventListener("change", function(){
+    addPhotoFiles(this.files);
+    this.value = "";
+  });
+
+  $("#photoGrid").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest("[data-photo-del]") : null;
+    if(!b) return;
+    var i = parseInt(b.getAttribute("data-photo-del"), 10);
+    var p = pendingPhotos[i];
+    if(p && p.url) URL.revokeObjectURL(p.url);
+    pendingPhotos.splice(i, 1);
+    renderPhotoGrid();
+  });
+
+  $("#viewerClose").addEventListener("click", closeViewer);
+  $("#viewer").addEventListener("click", function(e){
+    if(e.target === this || e.target.id === "viewerImg") closeViewer();
+  });
+
+  /* ---------- VIN подсказки ---------- */
+  function renderVinList(){
+    var seen = {};
+    var rows = [];
+    records.forEach(function(r){
+      if(!r.vin || seen[r.vin]) return;
+      seen[r.vin] = true;
+      rows.push('<option value="' + esc(r.vin) + '">' + esc([r.car, r.plate].filter(Boolean).join(" · ")) + '</option>');
+    });
+    $("#vinList").innerHTML = rows.join("");
+  }
+
+  /* ---------- шапка ---------- */
+  function renderAll(){
+    renderList();
+    renderVinList();
+    var clients = buildClients();
+    $("#hsub").textContent = "Записей: " + records.length + (clients.length ? " · клиентов: " + clients.length : "");
+    if($("#view-clients").classList.contains("on")) renderClients();
+  }
+
+  /* ---------- экспорт ---------- */
+  function download(filename, content, mime){
+    var blob = new Blob([content], { type: mime || "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+  }
+
+  function csvCell(v){
+    var s = String(v == null ? "" : v).replace(/\r?\n/g, " ");
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+
+  $("#expCsv").addEventListener("click", function(){
+    if(!records.length){ toast("Пока нет записей"); return; }
+    var head = ["Дата", "VIN", "Марка/модель", "Госномер", "Пробег, км", "Что ремонтировал", "Запчасти", "Стоимость, ₽", "Клиент", "Телефон", "Статус", "Фото, шт"];
+    var rows = [head.map(csvCell).join(";")];
+    filtered().forEach(function(r){
+      rows.push([
+        dmy(r.date), r.vin, r.car, r.plate, r.mileage, r.work, r.parts,
+        String(r.cost).replace(".", ","), r.client, r.phone,
+        r.status === "work" ? "В работе" : "Готово",
+        (r.photos || []).length
+      ].map(csvCell).join(";"));
+    });
+    download("remonty-" + today() + ".csv", "\uFEFF" + rows.join("\r\n"), "text/csv;charset=utf-8");
+    toast("Файл CSV скачан");
+  });
+
+  $("#expJson").addEventListener("click", function(){
+    if(!records.length){ toast("Пока нет записей"); return; }
+    var ids = [];
+    records.forEach(function(r){
+      (r.photos || []).forEach(function(id){ if(ids.indexOf(id) < 0) ids.push(id); });
+    });
+    toast("Готовим копию…");
+    Promise.all(ids.map(function(id){
+      return idbGet(id).then(function(rec){
+        if(!rec || !rec.blob) return null;
+        return blobToDataURL(rec.blob).then(function(u){ return [id, u]; }).catch(function(){ return null; });
+      }).catch(function(){ return null; });
+    })).then(function(pairs){
+      var photos = {};
+      var count = 0;
+      pairs.forEach(function(p){ if(p){ photos[p[0]] = p[1]; count++; } });
+      var payload = {
+        app: "carRepair",
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        records: records,
+        photos: photos
+      };
+      download("remont-backup-" + today() + ".json", JSON.stringify(payload), "application/json");
+      toast("Копия скачана: " + records.length + " записей, фото: " + count);
+    });
+  });
+
+  $("#impBtn").addEventListener("click", function(){ $("#impFile").click(); });
+
+  $("#impFile").addEventListener("change", function(){
+    var file = this.files && this.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var payload;
+      try{ payload = JSON.parse(String(reader.result)); }
+      catch(err){ toast("Не удалось прочитать файл копии"); return; }
+
+      var list = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.records) ? payload.records : null);
+      if(!list){ toast("Это не файл резервной копии"); return; }
+      var photos = (!Array.isArray(payload) && payload.photos && typeof payload.photos === "object") ? payload.photos : {};
+
+      var restores = Object.keys(photos).map(function(id){
+        try{ return idbPut(id, dataURLToBlob(photos[id])).catch(function(){}); }
+        catch(e){ return Promise.resolve(); }
+      });
+
+      Promise.all(restores).then(function(){
+        var added = 0;
+        list.forEach(function(raw){
+          if(!raw || typeof raw !== "object" || !raw.work) return;
+          var rec = {
+            id: raw.id || uid(),
+            vin: str(raw.vin).toUpperCase(),
+            date: str(raw.date) || today(),
+            car: str(raw.car), plate: str(raw.plate).toUpperCase(),
+            mileage: str(raw.mileage), client: str(raw.client), phone: str(raw.phone),
+            work: str(raw.work), parts: str(raw.parts), cost: str(raw.cost),
+            photos: Array.isArray(raw.photos) ? raw.photos.filter(function(x){ return typeof x === "string"; }) : [],
+            status: raw.status === "work" ? "work" : "done",
+            created: Number(raw.created) || Date.now(),
+            updated: Number(raw.updated) || Date.now()
+          };
+          var i = records.findIndex(function(r){ return r.id === rec.id; });
+          if(i > -1) records[i] = rec; else records.push(rec);
+          added++;
+        });
+        persist();
+        renderAll();
+        toast("Загружено записей: " + added + (Object.keys(photos).length ? ", фото: " + Object.keys(photos).length : ""));
+      });
+    };
+    reader.readAsText(file);
+    this.value = "";
+  });
+
+  $("#clearAll").addEventListener("click", function(){
+    if(!records.length){ toast("Список уже пуст"); return; }
+    if(!confirm("Удалить ВСЕ записи (" + records.length + ")? Это нельзя отменить.\nСначала лучше сделайте резервную копию.")) return;
+    records = [];
+    persist();
+    Object.keys(photoURLCache).forEach(revokeCached);
+    idbClear();
+    resetForm();
+    renderAll();
+    toast("Все записи удалены");
+  });
+
+  /* ---------- помощь ---------- */
+  $("#helpBtn").addEventListener("click", function(){ $("#modal").classList.add("on"); });
+  $("#closeModal").addEventListener("click", function(){ $("#modal").classList.remove("on"); });
+  $("#modal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
+
+  /* ---------- память: баннеры и восстановление вкладки ---------- */
+  function showStorageWarn(){
+    var warn = $("#storageWarn");
+    if(warn) warn.style.display = "flex";
+    var hint = $("#installHint");
+    if(hint) hint.style.display = "none";
+    var st = $("#helpStorage");
+    if(st) st.innerHTML = "❌ <b>Память недоступна</b> — записи не сохраняются. Откройте приложение по ссылке (не файлом) и добавьте на главный экран.";
+  }
+
+  function initStorageHints(){
+    var st = $("#helpStorage");
+    if(st){
+      st.innerHTML = STORAGE_OK
+        ? "✅ <b>Память доступна</b> — записи сохраняются в этом браузере. Сейчас записей: " + records.length + "."
+        : "❌ <b>Память недоступна</b> — записи не сохраняются. Откройте приложение по ссылке (не файлом) и добавьте на главный экран.";
+    }
+    if(!STORAGE_OK){ showStorageWarn(); return; }
+    var dismissed = false;
+    try{ dismissed = localStorage.getItem(KEY_HINT) === "1"; }catch(e){}
+    var hint = $("#installHint");
+    if(hint) hint.style.display = (!IS_STANDALONE && !dismissed) ? "flex" : "none";
+  }
+
+  function restoreLastTab(){
+    var name = "new";
+    try{ name = localStorage.getItem(KEY_TAB) || "new"; }catch(e){}
+    if(["new", "list", "clients"].indexOf(name) < 0) name = "new";
+    if(records.length && name === "new") name = "list";
+    showView(name);
+  }
+
+  var hideBtn = $("#hideHint");
+  if(hideBtn) hideBtn.addEventListener("click", function(){
+    try{ localStorage.setItem(KEY_HINT, "1"); }catch(e){}
+    var hint = $("#installHint");
+    if(hint) hint.style.display = "none";
+  });
+
+  /* ---------- старт ---------- */
+  records = load();
+  resetForm();
+  renderAll();
+  initStorageHints();
+  restoreLastTab();
+
+  if(navigator.storage && navigator.storage.persist){
+    try{ navigator.storage.persist().catch(function(){}); }catch(e){}
+  }
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function(err){
+    console.warn('Service Worker не зарегистрирован:', err);
+  });
+}
+</script>
+</body>
+</html>

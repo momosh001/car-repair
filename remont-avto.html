@@ -4,10 +4,14 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0f766e" />
+<meta name="description" content="Журнал ремонта авто: VIN, работа, запчасти, фото, клиенты. Работает офлайн." />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Ремонт" />
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0f766e" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <title>Журнал ремонта авто</title>
 <style>
 :root{
@@ -52,6 +56,20 @@ header{
   background:rgba(255,255,255,.14); color:#fff; font-size:17px; font-weight:700;
   display:grid;place-items:center; cursor:pointer; flex:0 0 auto;
 }
+
+/* ---------- подсказки в шапке ---------- */
+.hnote{
+  display:flex; gap:9px; align-items:flex-start;
+  margin-top:10px; border-radius:12px; padding:10px 12px;
+  font-size:12.5px; font-weight:600; line-height:1.45; text-align:left;
+}
+.hnote.warn{background:#fff1f2; color:#9f1239}
+.hnote.info{background:rgba(255,255,255,.16); color:#fff}
+.hnote .x{
+  margin-left:auto; flex:0 0 auto; border:0; background:transparent;
+  color:inherit; font:inherit; font-size:15px; line-height:1; cursor:pointer; padding:1px 3px;
+}
+.hnote b{font-weight:800}
 
 /* ---------- карточки/поля ---------- */
 .card-box{
@@ -255,6 +273,17 @@ details.backup[open] summary::after{content:"▴"}
     </div>
     <button class="help" id="helpBtn" aria-label="Помощь">?</button>
   </div>
+  <div class="wrap">
+    <div class="hnote warn" id="storageWarn" style="display:none">
+      <span aria-hidden="true">⚠️</span>
+      <span><b>Записи не сохраняются.</b> Браузер запретил доступ к памяти — так бывает, когда файл открыт как локальный или включён Приватный режим. Откройте приложение по ссылке и добавьте на главный экран — тогда всё сохраняется.</span>
+    </div>
+    <div class="hnote info" id="installHint" style="display:none">
+      <span aria-hidden="true">📱</span>
+      <span><b>Запускайте с иконки.</b> На iPhone: «Поделиться» → «На экран „Домой“». У иконки и у вкладки Safari разное хранилище: записи из браузера в иконку не переносятся.</span>
+      <button class="x" id="hideHint" type="button" aria-label="Скрыть подсказку">✕</button>
+    </div>
+  </div>
 </header>
 
 <main class="wrap">
@@ -401,7 +430,7 @@ details.backup[open] summary::after{content:"▴"}
   <div class="sheet">
     <h3>Как пользоваться</h3>
     <ol>
-      <li><b>Добавить на главный экран.</b> Откройте файл в браузере телефона → меню «⋮» (Android) или «Поделиться» (iPhone) → «Добавить на главный экран». Появится иконка, как у обычного приложения.</li>
+      <li><b>Установка на iPhone.</b> Откройте <b>ссылку</b> на приложение в Safari → кнопка «Поделиться» (⬆) → «На экран „Домой“». Появится иконка «Ремонт». Запускайте приложение только с иконки: у иконки и у вкладки Safari разное хранилище, поэтому записи из браузера в иконку сами не переносятся.</li>
       <li><b>Новая запись:</b> VIN, что ремонтировали, стоимость, фото → «Сохранить». Дату браузер подставит сам.</li>
       <li><b>Фото:</b> кнопка «📷 Добавить фото» — можно снять на камеру или выбрать из галереи. Нажмите на миниатюру в истории, чтобы открыть на весь экран.</li>
       <li><b>История:</b> все записи. Введите VIN в поиск — увидите всю историю ремонта этой машины и общую сумму.</li>
@@ -409,7 +438,8 @@ details.backup[open] summary::after{content:"▴"}
       <li>Нажмите на запись, чтобы исправить. Кнопка «Удалить» — внутри записи.</li>
       <li><b>Google Таблицы:</b> «История» → «Скачать таблицу (CSV)» → откройте файл в Google Таблицах (или загрузите на drive.google.com → «Открыть с помощью Google Таблиц»).</li>
     </ol>
-    <div class="note">⚠️ Записи и фото хранятся в памяти браузера этого телефона. Не очищайте данные браузера. Раз в неделю делайте «Резервная копия (JSON)» — фото входят в копию — и отправляйте себе в мессенджер.</div>
+    <div class="note" id="helpStorage">Хранилище: проверяем…</div>
+    <div class="note">⚠️ Записи и фото хранятся в памяти этого телефона. Не удаляйте иконку с главного экрана — вместе с ней удаляются и записи. Не очищайте данные браузера. Раз в неделю делайте «Резервную копию (JSON)» — фото входят в копию — и отправляйте себе в мессенджер.</div>
     <button class="btn" id="closeModal" type="button">Понятно</button>
   </div>
 </div>
@@ -419,14 +449,32 @@ details.backup[open] summary::after{content:"▴"}
   "use strict";
 
   var KEY = "carRepair.v1";
+  var KEY_TAB = "carRepair.tab";
+  var KEY_HINT = "carRepair.hideHint";
   var $ = function(s){ return document.querySelector(s); };
 
   var records = [];
   var editingId = null;
   var query = "";
 
+  /* ---------- проверка памяти (на iPhone это критично) ---------- */
+  var STORAGE_OK = (function(){
+    try{
+      var probe = "__cr_probe__";
+      localStorage.setItem(probe, "1");
+      var ok = localStorage.getItem(probe) === "1";
+      localStorage.removeItem(probe);
+      return ok;
+    }catch(e){ return false; }
+  })();
+  var IS_STANDALONE = (window.navigator.standalone === true) ||
+    !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
   /* ---------- хранилище ---------- */
   function load(){
+    if(!STORAGE_OK) return [];
     try{
       var raw = localStorage.getItem(KEY);
       var arr = raw ? JSON.parse(raw) : [];
@@ -453,8 +501,20 @@ details.backup[open] summary::after{content:"▴"}
     }catch(e){ return []; }
   }
   function persist(){
-    try{ localStorage.setItem(KEY, JSON.stringify(records)); }
-    catch(e){ toast("Не удалось сохранить: память браузера переполнена"); }
+    if(!STORAGE_OK){
+      showStorageWarn();
+      toast("⚠️ Сохранение недоступно — запись останется только до закрытия страницы");
+      return false;
+    }
+    try{
+      localStorage.setItem(KEY, JSON.stringify(records));
+      return true;
+    }catch(e){
+      STORAGE_OK = false;
+      showStorageWarn();
+      toast("Не удалось сохранить: память браузера переполнена");
+      return false;
+    }
   }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function str(v){ return v == null ? "" : String(v).trim(); }
@@ -708,6 +768,7 @@ details.backup[open] summary::after{content:"▴"}
     window.scrollTo({ top: 0, behavior: "smooth" });
     if(name === "list") renderList();
     if(name === "clients") renderClients();
+    try{ if(STORAGE_OK) localStorage.setItem(KEY_TAB, name); }catch(e){}
   }
   $("#tabNew").addEventListener("click", function(){
     if(editingId) exitEdit(); else resetForm();
@@ -849,16 +910,16 @@ details.backup[open] summary::after{content:"▴"}
       if(editingId){
         var idx = records.findIndex(function(r){ return r.id === editingId; });
         if(idx > -1) records[idx] = Object.assign({}, records[idx], data, { updated: Date.now() });
-        toast("Изменения сохранены");
+        var okEdit = persist();
+        toast(okEdit ? "Изменения сохранены" : "⚠️ Изменения не сохранены — память недоступна");
       }else{
         data.id = uid();
         data.created = Date.now();
         data.updated = Date.now();
         records.push(data);
-        toast("Запись добавлена");
+        var okNew = persist();
+        toast(okNew ? "Запись добавлена" : "⚠️ Запись не сохранена — память недоступна");
       }
-
-      persist();
       resetForm();
       query = "";
       $("#q").value = "";
@@ -1263,15 +1324,62 @@ details.backup[open] summary::after{content:"▴"}
   $("#closeModal").addEventListener("click", function(){ $("#modal").classList.remove("on"); });
   $("#modal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
 
+  /* ---------- память: баннеры и восстановление вкладки ---------- */
+  function showStorageWarn(){
+    var warn = $("#storageWarn");
+    if(warn) warn.style.display = "flex";
+    var hint = $("#installHint");
+    if(hint) hint.style.display = "none";
+    var st = $("#helpStorage");
+    if(st) st.innerHTML = "❌ <b>Память недоступна</b> — записи не сохраняются. Откройте приложение по ссылке (не файлом) и добавьте на главный экран.";
+  }
+
+  function initStorageHints(){
+    var st = $("#helpStorage");
+    if(st){
+      st.innerHTML = STORAGE_OK
+        ? "✅ <b>Память доступна</b> — записи сохраняются в этом браузере. Сейчас записей: " + records.length + "."
+        : "❌ <b>Память недоступна</b> — записи не сохраняются. Откройте приложение по ссылке (не файлом) и добавьте на главный экран.";
+    }
+    if(!STORAGE_OK){ showStorageWarn(); return; }
+    var dismissed = false;
+    try{ dismissed = localStorage.getItem(KEY_HINT) === "1"; }catch(e){}
+    var hint = $("#installHint");
+    if(hint) hint.style.display = (!IS_STANDALONE && !dismissed) ? "flex" : "none";
+  }
+
+  function restoreLastTab(){
+    var name = "new";
+    try{ name = localStorage.getItem(KEY_TAB) || "new"; }catch(e){}
+    if(["new", "list", "clients"].indexOf(name) < 0) name = "new";
+    if(records.length && name === "new") name = "list";
+    showView(name);
+  }
+
+  var hideBtn = $("#hideHint");
+  if(hideBtn) hideBtn.addEventListener("click", function(){
+    try{ localStorage.setItem(KEY_HINT, "1"); }catch(e){}
+    var hint = $("#installHint");
+    if(hint) hint.style.display = "none";
+  });
+
   /* ---------- старт ---------- */
   records = load();
   resetForm();
   renderAll();
+  initStorageHints();
+  restoreLastTab();
+
+  if(navigator.storage && navigator.storage.persist){
+    try{ navigator.storage.persist().catch(function(){}); }catch(e){}
+  }
 })();
 </script>
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function(){});
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function(err){
+    console.warn('Service Worker не зарегистрирован:', err);
+  });
 }
 </script>
 </body>

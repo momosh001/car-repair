@@ -1,45 +1,85 @@
-// Service Worker для офлайн-работы и кэширования
-const CACHE = 'car-repair-v2';
-const ASSETS = [
-  './',
-  './remont-avto.html',
-  './manifest.json'
+/* Журнал ремонта — service worker.
+   Кэширует оболочку приложения, чтобы оно открывалось без интернета
+   и запускалось как обычное приложение на iPhone (режим standalone). */
+
+var CACHE = "carRepair-v3";
+var ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./icons/icon-180.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
+  "./icons/favicon-64.png"
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
+self.addEventListener("install", function (e) {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-    ))
+    caches.open(CACHE).then(function (c) {
+      return Promise.all(ASSETS.map(function (url) {
+        return c.add(url).catch(function () { /* одного файла не хватило — не страшно */ });
+      }));
+    }).then(function () { return self.skipWaiting(); })
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  // Не кэшируем cross-origin и не-GET
-  if (url.origin !== location.origin || e.request.method !== 'GET') return;
+self.addEventListener("activate", function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) {
+        return k === CACHE ? null : caches.delete(k);
+      }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const fetchPromise = fetch(e.request).then(resp => {
-        if (resp.ok) {
-          const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+self.addEventListener("fetch", function (e) {
+  var req = e.request;
+  if (req.method !== "GET") return;
+
+  var url;
+  try { url = new URL(req.url); } catch (err) { return; }
+  if (url.origin !== self.location.origin) return;
+
+  // навигация: сначала сеть, при отсутствии сети — кэш
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.status === 200) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put("index.html", copy); });
         }
-        return resp;
-      }).catch(() => cached);
-      return cached || fetchPromise;
+        return res;
+      }).catch(function () {
+        return caches.open(CACHE).then(function (c) {
+          return c.match("index.html");
+        }).then(function (hit) {
+          return hit || new Response("Офлайн: приложение ещё не сохранено.", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" }
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // статика: сначала кэш, фоном обновляем
+  e.respondWith(
+    caches.open(CACHE).then(function (c) {
+      return c.match(req).then(function (hit) {
+        var net = fetch(req).then(function (res) {
+          if (res && res.status === 200 && res.type === "basic") {
+            var copy = res.clone();
+            c.put(req, copy);
+          }
+          return res;
+        }).catch(function () { return null; });
+        return hit || net.then(function (res) {
+          return res || new Response("", { status: 504 });
+        });
+      });
     })
   );
-});
-
-// Обновление при появлении новой версии
-self.addEventListener('message', e => {
-  if (e.data === 'skipWaiting') self.skipWaiting();
 });
