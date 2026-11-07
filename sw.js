@@ -2,7 +2,7 @@
    Кэширует оболочку приложения, чтобы оно открывалось без интернета
    и запускалось как обычное приложение на iPhone (режим standalone). */
 
-var CACHE = "carRepair-v13";
+var CACHE = "carRepair-v14";
 var ASSETS = [
   "./",
   "./index.html",
