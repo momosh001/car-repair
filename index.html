@@ -1653,9 +1653,10 @@ details.backup[open] summary::after{content:"▴"}
   function scan(file){
     if(busy) return;
     busy = true;
-    btn.disabled = true;
     showOverlay("Готовим фото…", "Держите VIN целиком в кадре");
     var canvas = null;
+    btnCam.disabled = true;
+    btnGal.disabled = true;
 
     function run(psm){
       return recognize(canvas, psm).then(function(data){
@@ -1681,7 +1682,8 @@ details.backup[open] summary::after{content:"▴"}
       showResult([], 0, (err && err.message) || "");
     }).then(function(){
       busy = false;
-      btn.disabled = false;
+      btnCam.disabled = false;
+      btnGal.disabled = false;
     });
   }
 
@@ -1724,7 +1726,8 @@ details.backup[open] summary::after{content:"▴"}
   $("#scanModal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
   $("#scanRetry").addEventListener("click", function(){
     $("#scanModal").classList.remove("on");
-    fileInput.value = "";
+    camInput.value = "";
+    galInput.value = "";
     fileInput.click();
   });
 })();
