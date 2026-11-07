@@ -1691,7 +1691,11 @@ function scan(file){
       showResult(cands.map(function(c){ return c.vin; }), data.confidence || 0, cands);
     }).catch(function(err){
       hideOverlay();
-      showResult([], 0, [], (err && err.message) || "Не удалось обработать фото");
+      var msg = (err && err.message) || "";
+      if(/Tesseract/i.test(msg) || msg.indexOf("OCR") > -1 || msg.indexOf("createWorker") > -1){
+        msg = "OCR не загрузился на этом устройстве. Введите VIN вручную.";
+      }
+      showResult([], 0, [], msg || "Не удалось обработать фото");
     }).then(function(){
       busy = false;
       btnCam.disabled = false;
