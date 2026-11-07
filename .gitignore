@@ -13,7 +13,11 @@ index.local.bak.html
 
 # Временные скрипты исправления OCR
 _fix_ocr.ps1
+_fix_ocr2.ps1
+_fix_ocr3.ps1
+_fix_all.ps1
+_fix_sr.ps1
 _fix_cancel.ps1
-_showResult_new.txt
-_scan_new.txt
+_scan_fixed.txt
+_showResult_fixed.txt
 _apply_new.txt
