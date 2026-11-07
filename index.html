@@ -1682,60 +1682,16 @@ function scan(file){
     btnCam.disabled = true;
     btnGal.disabled = true;
 
-    function run(psm){
-      return recognize(canvas, psm).then(function(data){
-        var cands = findCandidates(data.text || "");
-        return { list: cands.map(function(c){ return c.vin; }), conf: data.confidence || 0, all: cands };
-      }, function(err){
-        return { list: [], conf: 0, all: [] };
-      });
-    }
-
-    function mergeCands(runs){
-      var map = {}, order = [];
-      runs.forEach(function(run){
-        (run.all || []).forEach(function(c){
-          var k = c.vin;
-          if(!map[k]){
-            map[k] = { vin: k, clean: c.clean, check: c.check, conf: c.conf || 0 };
-            order.push(k);
-          } else {
-            map[k].clean = map[k].clean || c.clean;
-            map[k].check = map[k].check || c.check;
-            map[k].conf = Math.max(map[k].conf, c.conf || 0);
-          }
-        });
-      }
-      var cands = order.map(function(k){ return map[k]; }).sort(function(a, b){
-        var sa = (b.check ? 1 : 0) - (a.check ? 1 : 0);
-        if(sa !== 0) return sa;
-        var sb = (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
-        if(sb !== 0) return sb;
-        return (b.conf || 0) - (a.conf || 0);
-      });
-      return { list: cands.map(function(c){ return c.vin; }), all: cands, conf: cands[0] ? cands[0].conf : 0 };
-    }
-
     fileToCanvas(file).then(function(c){
       canvas = c;
-      return run("7");
-    }).then(function(a){
-      if(a.list.length === 1 && a.all[0] && a.all[0].check) return { list: [a.list[0]], conf: a.conf, all: a.all };
-      return run("6").then(function(b){
-        var merged = mergeCands([a, b]);
-        if(merged.list.length === 1 && merged.all[0] && merged.all[0].check){
-          return { list: [merged.list[0]], conf: merged.conf, all: merged.all };
-        }
-        return run("11").then(function(c){
-          return mergeCands([a, b, c]);
-        });
-      });
-    }).then(function(res){
+      return recognize(canvas, "7");
+    }).then(function(data){
+      var cands = findCandidates(data.text || "");
       hideOverlay();
-      showResult(res.list, res.conf, res.all || []);
+      showResult(cands.map(function(c){ return c.vin; }), data.confidence || 0, cands);
     }).catch(function(err){
       hideOverlay();
-      showResult([], 0, [], (err && err.message) || "");
+      showResult([], 0, [], (err && err.message) || "Не удалось обработать фото");
     }).then(function(){
       busy = false;
       btnCam.disabled = false;
