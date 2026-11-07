@@ -262,49 +262,6 @@ details.backup[open] summary::after{content:"▴"}
 .views{display:none}
 .views.on{display:block}
 
-/* ---------- скан VIN ---------- */
-.vin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px}
-.vin-row .hint{margin:0}
-.scan-group{display:flex; gap:7px; flex-wrap:wrap}
-.scan-btn{
-  display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
-  min-height:40px; padding:0 13px; border-radius:12px;
-  border:1.5px solid var(--line); background:var(--card); color:var(--ink);
-  font-size:13.5px; font-weight:700; cursor:pointer; white-space:nowrap;
-  -webkit-tap-highlight-color:transparent;
-}
-.scan-btn:hover{border-color:var(--accent)}
-.scan-btn:active{transform:scale(.97)}
-.scan-btn[disabled]{opacity:.55; pointer-events:none}
-.scan-btn.ghost{background:var(--bg)}
-.scan-overlay{
-  position:fixed; inset:0; z-index:120; background:rgba(2,6,23,.55);
-  display:none; align-items:center; justify-content:center; padding:20px;
-}
-.scan-overlay.on{display:flex}
-.scan-card{
-  background:var(--card); color:var(--ink); border-radius:18px;
-  padding:24px 18px; width:100%; max-width:330px; text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,.35);
-}
-.scan-spin{
-  width:36px; height:36px; margin:0 auto 14px; border-radius:50%;
-  border:3px solid var(--line); border-top-color:var(--accent);
-  animation:scanspin 1s linear infinite;
-}
-@keyframes scanspin{to{transform:rotate(360deg)}}
-.scan-status{font-size:15px; font-weight:600; margin:0; color:var(--ink)}
-.scan-sub{font-size:12.5px; color:var(--muted); margin:8px 0 0; line-height:1.45}
-.vres-vin{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:19px; font-weight:700; letter-spacing:.5px; text-align:center;
-  padding:14px 10px; background:var(--bg); border-radius:12px; margin:10px 0 8px;
-  word-break:break-all;
-}
-.vres-hint{font-size:12.5px; color:var(--muted); text-align:center; line-height:1.5; margin:0 0 16px}
-.vres-row{display:flex; gap:9px}
-.vres-row .btn{flex:1}
-</style>
 </head>
 <body>
 
@@ -342,13 +299,13 @@ details.backup[open] summary::after{content:"▴"}
                placeholder="Например XTA21150053912345" autocapitalize="characters" spellcheck="false" />
         <div class="vin-row">
           <div class="hint" id="vinHint">17 символов, буквы и цифры</div>
-          <div class="scan-group">
-            <button class="scan-btn" id="vinScanCamera" type="button">📷 Сфотографировать</button>
-            <button class="scan-btn ghost" id="vinScanGallery" type="button">🖼️ Из галереи</button>
+          
+            
+            
           </div>
         </div>
-        <input type="file" id="vinCameraInput" accept="image/*" capture="environment" style="display:none" />
-        <input type="file" id="vinGalleryInput" accept="image/*" style="display:none" />
+        
+        
         <datalist id="vinList"></datalist>
       </div>
 
@@ -475,31 +432,9 @@ details.backup[open] summary::after{content:"▴"}
   </div>
 </div>
 
-<div class="scan-overlay" id="scanOverlay">
-  <div class="scan-card">
-    <div class="scan-spin"></div>
-    <p class="scan-status" id="scanStatus">Распознаю VIN…</p>
-    <p class="scan-sub" id="scanSub">Держите VIN целиком в кадре</p>
-  </div>
-</div>
 
-<div class="modal" id="scanModal">
-  <div class="sheet">
-    <h3 id="scanTitle">VIN распознан</h3>
-    <div class="vres-vin" id="scanVin">—</div>
-    <p class="vres-hint" id="scanHint">Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S.</p>
-    <div id="scanCandidates" style="display:none"></div>
-    <div class="vres-row">
-      <button class="btn ghost" type="button" id="scanCancel">Отмена</button>
-      <button class="btn" type="button" id="scanApply">Подставить</button>
-    </div>
-    <div class="vres-row" id="scanRetryRow" style="display:none">
-      <button class="btn ghost" type="button" id="scanRetry">📷 Сфотографировать ещё раз</button>
-    </div>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+
 
 <div class="modal" id="modal">
   <div class="sheet">
@@ -507,7 +442,7 @@ details.backup[open] summary::after{content:"▴"}
     <ol>
       <li><b>Установка на iPhone.</b> Откройте <b>ссылку</b> на приложение в Safari → кнопка «Поделиться» (⬆) → «На экран „Домой“». Появится иконка «Ремонт». Запускайте приложение только с иконки: у иконки и у вкладки Safari разное хранилище, поэтому записи из браузера в иконку сами не переносятся.</li>
       <li><b>Новая запись:</b> VIN, что ремонтировали, стоимость, фото → «Сохранить». Дату браузер подставит сам.</li>
-      <li><b>Скан VIN:</b> нажмите «📷 Сфотографировать» или «🖼️ Из галереи» — номер распознается и появится во всплывающем окне. Нажмите «Подставить», чтобы вставить в поле. Обязательно проверьте символы глазами.</li>
+      <li><b>VIN:</b> вводите 17-значный номер вручную. Если VIN уже вводили раньше — марка, номер и клиент подставятся автоматически.</li>
       <li><b>Фото:</b> кнопка «📷 Добавить фото» — можно снять на камеру или выбрать из галереи. Нажмите на миниатюру в истории, чтобы открыть на весь экран.</li>
       <li><b>История:</b> все записи. Введите VIN в поиск — увидите всю историю ремонта этой машины и общую сумму.</li>
       <li><b>Клиенты:</b> собираются сами по имени и телефону. Внутри карточки — машины, ремонты, сумма и кнопка «Позвонить».</li>
@@ -1451,322 +1386,7 @@ details.backup[open] summary::after{content:"▴"}
   }
 })();
 </script>
-<script>
-/* ---------- Скан VIN по фото (Tesseract OCR, файлы в папке ocr/) ---------- */
-(function(){
-  "use strict";
 
-  var $ = function(s){ return document.querySelector(s); };
-  var vin = $("#vin");
-  var btnCam = $("#vinScanCamera");
-  var btnGal = $("#vinScanGallery");
-  var camInput = $("#vinCameraInput");
-  var galInput = $("#vinGalleryInput");
-  if(!vin || !btnCam || !btnGal || !camInput || !galInput) return;
-
-  var VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
-  var WHITELIST = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789";
-  var REPL = {
-    "O": "0", "Q": "0", "I": "1",
-    "А": "A", "В": "B", "С": "C", "Е": "E", "Н": "H",
-    "К": "K", "М": "M", "Р": "P", "Т": "T", "У": "Y", "Х": "X",
-    "О": "0", "І": "1", "Ї": "1", "Ј": "J"
-  };
-
-  var libPromise = null;
-  var workerPromise = null;
-  var progressCb = null;
-  var busy = false;
-  var current = "";
-
-  function toast(msg){
-    var t = $("#toast");
-    if(!t) return;
-    t.textContent = msg;
-    t.classList.add("on");
-    clearTimeout(toast._t);
-    toast._t = setTimeout(function(){ t.classList.remove("on"); }, 2600);
-  }
-
-  function loadLib(){
-    if(window.Tesseract) return Promise.resolve();
-    if(libPromise) return libPromise;
-    libPromise = new Promise(function(resolve, reject){
-      var s = document.createElement("script");
-      s.src = "ocr/tesseract.min.js";
-      s.async = true;
-      s.onload = function(){ resolve(); };
-      s.onerror = function(){ reject(new Error("Не удалось загрузить OCR. Проверьте интернет.")); };
-      document.head.appendChild(s);
-    });
-    libPromise.catch(function(){ libPromise = null; });
-    return libPromise;
-  }
-
-  function getWorker(){
-    if(workerPromise) return workerPromise;
-    workerPromise = loadLib().then(function(){
-      var base = new URL("ocr/", window.location.href).href;
-      return Tesseract.createWorker("eng", 1, {
-        workerPath: base + "worker.min.js",
-        corePath: base,
-        langPath: base,
-        gzip: true,
-        logger: function(m){ if(progressCb) progressCb(m); },
-        errorHandler: function(e){ console.warn("OCR:", e); }
-      });
-    }).then(function(w){
-      return w.setParameters({
-        tessedit_char_whitelist: WHITELIST,
-        preserve_interword_spaces: "0"
-      }).then(function(){ return w; });
-    });
-    workerPromise.catch(function(){ workerPromise = null; });
-    return workerPromise;
-  }
-
-  function fileToCanvas(file){
-    return new Promise(function(resolve, reject){
-      var url = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function(){
-        try{
-          var w = img.naturalWidth || img.width;
-          var h = img.naturalHeight || img.height;
-          var scale = Math.min(1, 2200 / Math.max(w, h));
-          var c = document.createElement("canvas");
-          c.width = Math.max(1, Math.round(w * scale));
-          c.height = Math.max(1, Math.round(h * scale));
-          var ctx = c.getContext("2d");
-          ctx.drawImage(img, 0, 0, c.width, c.height);
-          URL.revokeObjectURL(url);
-          resolve(c);
-        }catch(e){
-          URL.revokeObjectURL(url);
-          reject(new Error("Не удалось обработать фото"));
-        }
-      };
-      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("Не удалось открыть фото")); };
-      img.src = url;
-    });
-  }
-
-  /* ---------- валидация контрольной цифры VIN (позиция 9) ---------- */
-  var VIN_VALUES = {
-    A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9,
-    0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9
-  };
-  var VIN_WEIGHTS = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2];
-
-  function vinCheckDigitValid(vin){
-    var s = String(vin || "").toUpperCase();
-    if(!VIN_RE.test(s)) return false;
-    var sum = 0;
-    for(var i = 0; i < 17; i++){
-      var ch = s.charAt(i);
-      var v = VIN_VALUES[ch];
-      if(v === undefined) return false;
-      sum += v * VIN_WEIGHTS[i];
-    }
-    var rem = sum % 11;
-    var check = rem === 10 ? "X" : String(rem);
-    return s.charAt(8) === check;
-  }
-
-  function normalizeText(text){
-    var t = String(text || "").toUpperCase();
-    var out = "";
-    for(var i = 0; i < t.length; i++){
-      var ch = t.charAt(i);
-      if(REPL[ch]) ch = REPL[ch];
-      out += /[A-Z0-9]/.test(ch) ? ch : " ";
-    }
-    return out;
-  }
-
-  function findCandidates(text){
-    var map = {}, order = [];
-    function add(s, clean, conf){
-      if(!VIN_RE.test(s)) return;
-      var k = s;
-      if(!map[k]){ map[k] = { vin: k, clean: false, conf: conf || 0, check: vinCheckDigitValid(k) }; order.push(k); }
-      if(clean) map[k].clean = true;
-      if(conf && conf > map[k].conf) map[k].conf = conf;
-    }
-    String(text || "").split(/\r?\n/).forEach(function(line){
-      var flat = normalizeText(line).replace(/\s+/g, "");
-      if(flat.length === 17) add(flat, true);
-      else for(var i = 0; i + 17 <= flat.length; i++) add(flat.slice(i, i + 17), false);
-    });
-    if(!order.length){
-      var all = normalizeText(text).replace(/\s+/g, "");
-      if(all.length === 17) add(all, true);
-      else for(var j = 0; j + 17 <= all.length; j++) add(all.slice(j, j + 17), false);
-    }
-    return order.map(function(k){ return map[k]; }).sort(function(a, b){
-      var sa = (b.check ? 1 : 0) - (a.check ? 1 : 0);
-      if(sa !== 0) return sa;
-      var sb = (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
-      if(sb !== 0) return sb;
-      return (b.conf || 0) - (a.conf || 0);
-    }).slice(0, 5);
-  }
-
-  function showOverlay(status, sub){
-    $("#scanStatus").textContent = status;
-    $("#scanSub").textContent = sub || "";
-    $("#scanOverlay").classList.add("on");
-  }
-  function hideOverlay(){ $("#scanOverlay").classList.remove("on"); }
-
-  function onProgress(m){
-    if(!m) return;
-    var st = String(m.status || "");
-    if(st.indexOf("recognizing") > -1){
-      $("#scanStatus").textContent = "Распознаю VIN…";
-      $("#scanSub").textContent = Math.round((m.progress || 0) * 100) + "%";
-    }else if(st.indexOf("loading") > -1 || st.indexOf("initializing") > -1){
-      $("#scanStatus").textContent = "Загружаем OCR…";
-      $("#scanSub").textContent = "Первый раз — несколько секунд, потом быстрее";
-    }
-  }
-
-  function recognize(canvas, psm){
-    return getWorker().then(function(w){
-      progressCb = onProgress;
-      return w.setParameters({ tessedit_pageseg_mode: String(psm) }).then(function(){
-        return w.recognize(canvas);
-      }).then(function(res){
-        progressCb = null;
-        return res.data || {};
-      }, function(err){
-        progressCb = null;
-        throw err;
-      });
-    });
-  }
-
-  function showResult(list, conf, all, errMsg, rawText){
-    all = all || [];
-    var ok = !!(list && list.length);
-    current = ok ? list[0] : "";
-    $("#scanTitle").textContent = ok ? "VIN распознан" : "Не удалось распознать";
-    $("#scanVin").textContent = ok ? current : "—";
-    $("#scanApply").style.display = ok ? "" : "none";
-    $("#scanRetryRow").style.display = ok ? "none" : "flex";
-
-    var candBox = $("#scanCandidates");
-    if(list.length > 0){
-      candBox.style.display = "";
-      candBox.innerHTML = list.slice(0,4).map(function(v, idx){
-        var c = all.find(function(x){ return x.vin === v; }) || {};
-        var mark = c.check ? " <span style='color:var(--accent);font-weight:700'>✓</span>" : "";
-        var checked = (idx === 0) ? 'checked' : '';
-        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+v+'" style="margin-right:8px" onclick="current=this.value" '+checked+'>'+v+mark+'</label>';
-      }).join("");
-    }else{
-      candBox.style.display = "none";
-      candBox.innerHTML = "";
-    }
-
-    // Показываемсырой текст OCR если ничего не найдено — пользователь увидит, что было на фото
-    var rawLine = "";
-    if(!ok && rawText){
-      var firstLine = String(rawText).split(/\r?\n/)[0];
-      if(firstLine && firstLine.trim().length > 0){
-        rawLine = " Распознанный текст: \"" + firstLine.trim().slice(0,60) + "\"";
-      }
-    }
-
-    var checkText = (all&&all[0]&&all[0].check)?"совпадает":"не подтверждена";
-    var hintBase = ok
-      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Контрольная цифра VIN: "+checkText+"."
-      : "Сфотографируйте табличку VIN крупно и ровно, без бликов, целиком в кадре."+rawLine;
-    $("#scanHint").textContent = hintBase + " Если не совпало — исправьте вручную.";
-    $("#scanModal").classList.add("on");
-  }
-function scan(file){
-    if(busy) return;
-    busy = true;
-    showOverlay("Готовим фото…", "Держите VIN целиком в кадре");
-    var canvas = null;
-    var rawOcrText = "";
-    btnCam.disabled = true;
-    btnGal.disabled = true;
-
-    fileToCanvas(file).then(function(c){
-      canvas = c;
-      return recognize(canvas, "7");
-    }).then(function(data){
-      rawOcrText = data.text || "";
-      var cands = findCandidates(rawOcrText);
-      hideOverlay();
-      showResult(cands.map(function(c){ return c.vin; }), data.confidence || 0, cands, null, rawOcrText);
-    }).catch(function(err){
-      hideOverlay();
-      var msg = (err && err.message) || "";
-      if(/Tesseract/i.test(msg) || msg.indexOf("OCR") > -1 || msg.indexOf("createWorker") > -1){
-        msg = "OCR не загрузился на этом устройстве. Введите VIN вручную.";
-      }
-      showResult([], 0, [], msg || "Не удалось обработать фото", rawOcrText);
-    }).then(function(){
-      busy = false;
-      btnCam.disabled = false;
-      btnGal.disabled = false;
-    });
-  }
-btnCam.addEventListener("click", function(){
-    if(busy) return;
-    camInput.value = "";
-    camInput.click();
-  });
-
-  btnGal.addEventListener("click", function(){
-    if(busy) return;
-    galInput.value = "";
-    galInput.click();
-  });
-
-  camInput.addEventListener("change", function(){
-    var f = this.files && this.files[0];
-    this.value = "";
-    if(f) scan(f);
-  });
-
-  galInput.addEventListener("change", function(){
-    var f = this.files && this.files[0];
-    this.value = "";
-    if(f) scan(f);
-  });
-
-  $("#scanApply").addEventListener("click", function(){
-    if(!current) return;
-    var sel = document.querySelector('input[name="cand"]:checked');
-    if(sel) current = sel.value;
-    vin.value = current;
-    vin.dispatchEvent(new Event("input", { bubbles: true }));
-    vin.dispatchEvent(new Event("change", { bubbles: true }));
-    $("#scanModal").classList.remove("on");
-    current = "";
-    toast("VIN подставлен — проверьте символы");
-    vin.focus();
-    try{ vin.setSelectionRange(0, vin.value.length); }catch(e){}
-  });
-
-  $("#scanCancel").addEventListener("click", function(){
-    current = "";
-    $("#scanModal").classList.remove("on");
-    toast("Отменено");
-  });
-
-$("#scanRetry").addEventListener("click", function(){
-    $("#scanModal").classList.remove("on");
-    camInput.value = "";
-    galInput.value = "";
-    fileInput.click();
-  });
-})();
-</script>
 <script>
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function(err){
