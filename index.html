@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8" />
@@ -488,6 +488,7 @@ details.backup[open] summary::after{content:"▴"}
     <h3 id="scanTitle">VIN распознан</h3>
     <div class="vres-vin" id="scanVin">—</div>
     <p class="vres-hint" id="scanHint">Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S.</p>
+    <div id="scanCandidates" style="display:none"></div>
     <div class="vres-row">
       <button class="btn ghost" type="button" id="scanCancel">Отмена</button>
       <button class="btn" type="button" id="scanApply">Подставить</button>
@@ -1550,6 +1551,28 @@ details.backup[open] summary::after{content:"▴"}
     });
   }
 
+  /* ---------- валидация контрольной цифры VIN (позиция 9) ---------- */
+  var VIN_VALUES = {
+    A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9,
+    0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9
+  };
+  var VIN_WEIGHTS = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2];
+
+  function vinCheckDigitValid(vin){
+    var s = String(vin || "").toUpperCase();
+    if(!VIN_RE.test(s)) return false;
+    var sum = 0;
+    for(var i = 0; i < 17; i++){
+      var ch = s.charAt(i);
+      var v = VIN_VALUES[ch];
+      if(v === undefined) return false;
+      sum += v * VIN_WEIGHTS[i];
+    }
+    var rem = sum % 11;
+    var check = rem === 10 ? "X" : String(rem);
+    return s.charAt(8) === check;
+  }
+
   function normalizeText(text){
     var t = String(text || "").toUpperCase();
     var out = "";
@@ -1563,10 +1586,12 @@ details.backup[open] summary::after{content:"▴"}
 
   function findCandidates(text){
     var map = {}, order = [];
-    function add(s, clean){
+    function add(s, clean, conf){
       if(!VIN_RE.test(s)) return;
-      if(!map[s]){ map[s] = { vin: s, clean: false }; order.push(s); }
-      if(clean) map[s].clean = true;
+      var k = s;
+      if(!map[k]){ map[k] = { vin: k, clean: false, conf: conf || 0, check: vinCheckDigitValid(k) }; order.push(k); }
+      if(clean) map[k].clean = true;
+      if(conf && conf > map[k].conf) map[k].conf = conf;
     }
     String(text || "").split(/\r?\n/).forEach(function(line){
       var flat = normalizeText(line).replace(/\s+/g, "");
@@ -1579,7 +1604,11 @@ details.backup[open] summary::after{content:"▴"}
       else for(var j = 0; j + 17 <= all.length; j++) add(all.slice(j, j + 17), false);
     }
     return order.map(function(k){ return map[k]; }).sort(function(a, b){
-      return (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
+      var sa = (b.check ? 1 : 0) - (a.check ? 1 : 0);
+      if(sa !== 0) return sa;
+      var sb = (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
+      if(sb !== 0) return sb;
+      return (b.conf || 0) - (a.conf || 0);
     }).slice(0, 5);
   }
 
@@ -1588,22 +1617,24 @@ details.backup[open] summary::after{content:"▴"}
     runs.forEach(function(run){
       (run.list || []).forEach(function(c){
         var k = c.vin;
-        if(!map[k]){ map[k] = { vin: k, clean: false, count: 0, conf: 0 }; order.push(k); }
+        if(!map[k]){ map[k] = { vin: k, clean: false, check: c.check, count: 0, conf: 0 }; order.push(k); }
         map[k].count++;
         map[k].clean = map[k].clean || c.clean;
+        map[k].check = map[k].check || c.check;
         map[k].conf = Math.max(map[k].conf, run.conf || 0);
       });
     });
-    var best = null, bestScore = -1;
-    order.forEach(function(k){
-      var c = map[k];
-      var score = (c.clean ? 100000 : 0) + c.count * 1000 + c.conf;
-      if(score > bestScore){ bestScore = score; best = c; }
+    var cands = order.map(function(k){ return map[k]; }).sort(function(a, b){
+      var sa = (b.check ? 1 : 0) - (a.check ? 1 : 0);
+      if(sa !== 0) return sa;
+      var sb = (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
+      if(sb !== 0) return sb;
+      return (b.conf || 0) - (a.conf || 0);
     });
-    return best ? { list: [best.vin], conf: best.conf } : { list: [], conf: 0 };
+    var best = cands[0] || null;
+    return { list: cands.map(function(c){ return c.vin; }), conf: best ? best.conf : 0, all: cands };
   }
-
-  function showOverlay(status, sub){
+function showOverlay(status, sub){
     $("#scanStatus").textContent = status;
     $("#scanSub").textContent = sub || "";
     $("#scanOverlay").classList.add("on");
@@ -1637,20 +1668,33 @@ details.backup[open] summary::after{content:"▴"}
     });
   }
 
-  function showResult(list, conf, errMsg){
+  function showResult(list, conf, all, errMsg){
     var ok = !!(list && list.length);
     current = ok ? list[0] : "";
     $("#scanTitle").textContent = ok ? "VIN распознан" : "Не удалось распознать";
     $("#scanVin").textContent = ok ? current : "—";
     $("#scanApply").style.display = ok ? "" : "none";
     $("#scanRetryRow").style.display = ok ? "none" : "flex";
+
+    var candBox = $("#scanCandidates");
+    if(ok && all && all.length > 1){
+      candBox.style.display = "";
+      candBox.innerHTML = all.slice(0,4).map(function(c){
+        var mark = c.check ? " <span style='color:var(--accent);font-weight:700'>✓</span>" : "";
+        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+c.vin+'" style="margin-right:8px" '+(c===all[0]?'checked':'')+'>'+c.vin+mark+'</label>';
+      }).join("");
+    }else{
+      candBox.style.display = "none";
+      candBox.innerHTML = "";
+    }
+
+    var checkText = (all&&all[0]&&all[0].check)?"совпадает":"не подтверждена";
     $("#scanHint").textContent = ok
-      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Если не совпало — исправьте вручную."
+      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Контрольная цифра VIN: "+checkText+". Если не совпало — исправьте вручную."
       : (errMsg || "Сфотографируйте табличку VIN крупно и ровно, без бликов, целиком в кадре. Или введите VIN вручную.");
     $("#scanModal").classList.add("on");
   }
-
-  function scan(file){
+function scan(file){
     if(busy) return;
     busy = true;
     showOverlay("Готовим фото…", "Держите VIN целиком в кадре");
@@ -1668,26 +1712,25 @@ details.backup[open] summary::after{content:"▴"}
       canvas = c;
       return run("7");
     }).then(function(a){
-      if(a.list.length === 1 && a.list[0].clean) return { list: [a.list[0].vin], conf: a.conf };
+      if(a.list.length === 1 && a.all[0] && a.all[0].check) return { list: [a.list[0]], conf: a.conf, all: a.all };
       return run("6").then(function(b){
         var v = vote([a, b]);
-        if(v.list.length) return v;
+        if(v.list.length && v.all[0] && v.all[0].check) return { list: [v.list[0]], conf: v.conf, all: v.all };
         return run("11").then(function(c){ return vote([a, b, c]); });
       });
     }).then(function(res){
       hideOverlay();
-      showResult(res.list, res.conf);
+      showResult(res.list, res.conf, res.all);
     }).catch(function(err){
       hideOverlay();
-      showResult([], 0, (err && err.message) || "");
+      showResult([], 0, [], (err && err.message) || "");
     }).then(function(){
       busy = false;
       btnCam.disabled = false;
       btnGal.disabled = false;
     });
   }
-
-  btnCam.addEventListener("click", function(){
+btnCam.addEventListener("click", function(){
     if(busy) return;
     camInput.value = "";
     camInput.click();
@@ -1713,6 +1756,8 @@ details.backup[open] summary::after{content:"▴"}
 
   $("#scanApply").addEventListener("click", function(){
     if(!current) return;
+    var sel = document.querySelector('input[name="cand"]:checked');
+    if(sel) current = sel.value;
     vin.value = current;
     vin.dispatchEvent(new Event("input", { bubbles: true }));
     vin.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1721,10 +1766,7 @@ details.backup[open] summary::after{content:"▴"}
     vin.focus();
     try{ vin.setSelectionRange(0, vin.value.length); }catch(e){}
   });
-
-  $("#scanCancel").addEventListener("click", function(){ $("#scanModal").classList.remove("on"); });
-  $("#scanModal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
-  $("#scanRetry").addEventListener("click", function(){
+$("#scanRetry").addEventListener("click", function(){
     $("#scanModal").classList.remove("on");
     camInput.value = "";
     galInput.value = "";

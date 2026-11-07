@@ -1,6 +1,18 @@
-# Локальная папка для тестовой сборки — в репозиторий не нужна
+﻿# Локальная папка для тестовой сборки — в репозиторий не нужна
 site/
 
 # Временные файлы
 _test-backup.json
 *.tmp
+
+# Служебные файлы сборки и локальных тестов
+_build.ps1
+_mock.js
+_test-cloud.html
+index.local.bak.html
+
+# Временные скрипты исправления OCR
+_fix_ocr.ps1
+_showResult_new.txt
+_scan_new.txt
+_apply_new.txt
