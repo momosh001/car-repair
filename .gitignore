@@ -18,6 +18,12 @@ _fix_ocr3.ps1
 _fix_all.ps1
 _fix_sr.ps1
 _fix_cancel.ps1
+_fix_final.ps1
+_fix_final2.ps1
+_fix_scan.ps1
+_scan_v2.js
+_showResult_v2.js
+_scan_final.js
 _scan_fixed.txt
 _showResult_fixed.txt
 _apply_new.txt
