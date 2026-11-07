@@ -261,6 +261,47 @@ details.backup[open] summary::after{content:"▴"}
 .sheet .note{font-size:13px; color:var(--muted); background:var(--bg); border-radius:12px; padding:11px 13px; margin-bottom:14px}
 .views{display:none}
 .views.on{display:block}
+
+/* ---------- скан VIN ---------- */
+.vin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px}
+.vin-row .hint{margin:0}
+.scan-btn{
+  display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
+  min-height:40px; padding:0 13px; border-radius:12px;
+  border:1.5px solid var(--line); background:var(--card); color:var(--ink);
+  font-size:13.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.scan-btn:hover{border-color:var(--accent)}
+.scan-btn:active{transform:scale(.97)}
+.scan-btn[disabled]{opacity:.55; pointer-events:none}
+.scan-overlay{
+  position:fixed; inset:0; z-index:120; background:rgba(2,6,23,.55);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+.scan-overlay.on{display:flex}
+.scan-card{
+  background:var(--card); color:var(--ink); border-radius:18px;
+  padding:24px 18px; width:100%; max-width:330px; text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+.scan-spin{
+  width:36px; height:36px; margin:0 auto 14px; border-radius:50%;
+  border:3px solid var(--line); border-top-color:var(--accent);
+  animation:scanspin 1s linear infinite;
+}
+@keyframes scanspin{to{transform:rotate(360deg)}}
+.scan-status{font-size:15px; font-weight:600; margin:0; color:var(--ink)}
+.scan-sub{font-size:12.5px; color:var(--muted); margin:8px 0 0; line-height:1.45}
+.vres-vin{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:19px; font-weight:700; letter-spacing:.5px; text-align:center;
+  padding:14px 10px; background:var(--bg); border-radius:12px; margin:10px 0 8px;
+  word-break:break-all;
+}
+.vres-hint{font-size:12.5px; color:var(--muted); text-align:center; line-height:1.5; margin:0 0 16px}
+.vres-row{display:flex; gap:9px}
+.vres-row .btn{flex:1}
 </style>
 </head>
 <body>
@@ -297,7 +338,11 @@ details.backup[open] summary::after{content:"▴"}
         <label for="vin">VIN номер</label>
         <input id="vin" name="vin" type="text" inputmode="text" maxlength="17"
                placeholder="Например XTA21150053912345" autocapitalize="characters" spellcheck="false" />
-        <div class="hint" id="vinHint">17 символов, буквы и цифры</div>
+        <div class="vin-row">
+          <div class="hint" id="vinHint">17 символов, буквы и цифры</div>
+          <button class="scan-btn" id="vinScanBtn" type="button">📷 Скан VIN</button>
+        </div>
+        <input type="file" id="vinPhotoInput" accept="image/*" capture="environment" style="display:none" />
         <datalist id="vinList"></datalist>
       </div>
 
@@ -424,6 +469,29 @@ details.backup[open] summary::after{content:"▴"}
   </div>
 </div>
 
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-card">
+    <div class="scan-spin"></div>
+    <p class="scan-status" id="scanStatus">Распознаю VIN…</p>
+    <p class="scan-sub" id="scanSub">Держите VIN целиком в кадре</p>
+  </div>
+</div>
+
+<div class="modal" id="scanModal">
+  <div class="sheet">
+    <h3 id="scanTitle">VIN распознан</h3>
+    <div class="vres-vin" id="scanVin">—</div>
+    <p class="vres-hint" id="scanHint">Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S.</p>
+    <div class="vres-row">
+      <button class="btn ghost" type="button" id="scanCancel">Отмена</button>
+      <button class="btn" type="button" id="scanApply">Подставить</button>
+    </div>
+    <div class="vres-row" id="scanRetryRow" style="display:none">
+      <button class="btn ghost" type="button" id="scanRetry">📷 Сфотографировать ещё раз</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal" id="modal">
@@ -432,6 +500,7 @@ details.backup[open] summary::after{content:"▴"}
     <ol>
       <li><b>Установка на iPhone.</b> Откройте <b>ссылку</b> на приложение в Safari → кнопка «Поделиться» (⬆) → «На экран „Домой“». Появится иконка «Ремонт». Запускайте приложение только с иконки: у иконки и у вкладки Safari разное хранилище, поэтому записи из браузера в иконку сами не переносятся.</li>
       <li><b>Новая запись:</b> VIN, что ремонтировали, стоимость, фото → «Сохранить». Дату браузер подставит сам.</li>
+      <li><b>Скан VIN:</b> кнопка «📷 Скан VIN» — сфотографируйте табличку VIN, номер распознается и подставится в поле. Обязательно проверьте символы глазами.</li>
       <li><b>Фото:</b> кнопка «📷 Добавить фото» — можно снять на камеру или выбрать из галереи. Нажмите на миниатюру в истории, чтобы открыть на весь экран.</li>
       <li><b>История:</b> все записи. Введите VIN в поиск — увидите всю историю ремонта этой машины и общую сумму.</li>
       <li><b>Клиенты:</b> собираются сами по имени и телефону. Внутри карточки — машины, ремонты, сумма и кнопка «Позвонить».</li>
@@ -1373,6 +1442,271 @@ details.backup[open] summary::after{content:"▴"}
   if(navigator.storage && navigator.storage.persist){
     try{ navigator.storage.persist().catch(function(){}); }catch(e){}
   }
+})();
+</script>
+<script>
+/* ---------- Скан VIN по фото (Tesseract OCR, файлы в папке ocr/) ---------- */
+(function(){
+  "use strict";
+
+  var $ = function(s){ return document.querySelector(s); };
+  var vin = $("#vin");
+  var btn = $("#vinScanBtn");
+  var fileInput = $("#vinPhotoInput");
+  if(!vin || !btn || !fileInput) return;
+
+  var VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
+  var WHITELIST = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789";
+  var REPL = {
+    "O": "0", "Q": "0", "I": "1",
+    "А": "A", "В": "B", "С": "C", "Е": "E", "Н": "H",
+    "К": "K", "М": "M", "Р": "P", "Т": "T", "У": "Y", "Х": "X",
+    "О": "0", "І": "1", "Ї": "1", "Ј": "J"
+  };
+
+  var libPromise = null;
+  var workerPromise = null;
+  var progressCb = null;
+  var busy = false;
+  var current = "";
+
+  function toast(msg){
+    var t = $("#toast");
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove("on"); }, 2600);
+  }
+
+  function loadLib(){
+    if(window.Tesseract) return Promise.resolve();
+    if(libPromise) return libPromise;
+    libPromise = new Promise(function(resolve, reject){
+      var s = document.createElement("script");
+      s.src = "ocr/tesseract.min.js";
+      s.async = true;
+      s.onload = function(){ resolve(); };
+      s.onerror = function(){ reject(new Error("Не удалось загрузить OCR. Проверьте интернет.")); };
+      document.head.appendChild(s);
+    });
+    libPromise.catch(function(){ libPromise = null; });
+    return libPromise;
+  }
+
+  function getWorker(){
+    if(workerPromise) return workerPromise;
+    workerPromise = loadLib().then(function(){
+      var base = new URL("ocr/", window.location.href).href;
+      return Tesseract.createWorker("eng", 1, {
+        workerPath: base + "worker.min.js",
+        corePath: base,
+        langPath: base,
+        gzip: true,
+        logger: function(m){ if(progressCb) progressCb(m); },
+        errorHandler: function(e){ console.warn("OCR:", e); }
+      });
+    }).then(function(w){
+      return w.setParameters({
+        tessedit_char_whitelist: WHITELIST,
+        preserve_interword_spaces: "0"
+      }).then(function(){ return w; });
+    });
+    workerPromise.catch(function(){ workerPromise = null; });
+    return workerPromise;
+  }
+
+  function fileToCanvas(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        try{
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          var scale = Math.min(1, 2200 / Math.max(w, h));
+          var c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(w * scale));
+          c.height = Math.max(1, Math.round(h * scale));
+          var ctx = c.getContext("2d");
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c);
+        }catch(e){
+          URL.revokeObjectURL(url);
+          reject(new Error("Не удалось обработать фото"));
+        }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("Не удалось открыть фото")); };
+      img.src = url;
+    });
+  }
+
+  function normalizeText(text){
+    var t = String(text || "").toUpperCase();
+    var out = "";
+    for(var i = 0; i < t.length; i++){
+      var ch = t.charAt(i);
+      if(REPL[ch]) ch = REPL[ch];
+      out += /[A-Z0-9]/.test(ch) ? ch : " ";
+    }
+    return out;
+  }
+
+  function findCandidates(text){
+    var map = {}, order = [];
+    function add(s, clean){
+      if(!VIN_RE.test(s)) return;
+      if(!map[s]){ map[s] = { vin: s, clean: false }; order.push(s); }
+      if(clean) map[s].clean = true;
+    }
+    String(text || "").split(/\r?\n/).forEach(function(line){
+      var flat = normalizeText(line).replace(/\s+/g, "");
+      if(flat.length === 17) add(flat, true);
+      else for(var i = 0; i + 17 <= flat.length; i++) add(flat.slice(i, i + 17), false);
+    });
+    if(!order.length){
+      var all = normalizeText(text).replace(/\s+/g, "");
+      if(all.length === 17) add(all, true);
+      else for(var j = 0; j + 17 <= all.length; j++) add(all.slice(j, j + 17), false);
+    }
+    return order.map(function(k){ return map[k]; }).sort(function(a, b){
+      return (b.clean ? 1 : 0) - (a.clean ? 1 : 0);
+    }).slice(0, 5);
+  }
+
+  function vote(runs){
+    var map = {}, order = [];
+    runs.forEach(function(run){
+      (run.list || []).forEach(function(c){
+        var k = c.vin;
+        if(!map[k]){ map[k] = { vin: k, clean: false, count: 0, conf: 0 }; order.push(k); }
+        map[k].count++;
+        map[k].clean = map[k].clean || c.clean;
+        map[k].conf = Math.max(map[k].conf, run.conf || 0);
+      });
+    });
+    var best = null, bestScore = -1;
+    order.forEach(function(k){
+      var c = map[k];
+      var score = (c.clean ? 100000 : 0) + c.count * 1000 + c.conf;
+      if(score > bestScore){ bestScore = score; best = c; }
+    });
+    return best ? { list: [best.vin], conf: best.conf } : { list: [], conf: 0 };
+  }
+
+  function showOverlay(status, sub){
+    $("#scanStatus").textContent = status;
+    $("#scanSub").textContent = sub || "";
+    $("#scanOverlay").classList.add("on");
+  }
+  function hideOverlay(){ $("#scanOverlay").classList.remove("on"); }
+
+  function onProgress(m){
+    if(!m) return;
+    var st = String(m.status || "");
+    if(st.indexOf("recognizing") > -1){
+      $("#scanStatus").textContent = "Распознаю VIN…";
+      $("#scanSub").textContent = Math.round((m.progress || 0) * 100) + "%";
+    }else if(st.indexOf("loading") > -1 || st.indexOf("initializing") > -1){
+      $("#scanStatus").textContent = "Загружаем OCR…";
+      $("#scanSub").textContent = "Первый раз — несколько секунд, потом быстрее";
+    }
+  }
+
+  function recognize(canvas, psm){
+    return getWorker().then(function(w){
+      progressCb = onProgress;
+      return w.setParameters({ tessedit_pageseg_mode: String(psm) }).then(function(){
+        return w.recognize(canvas);
+      }).then(function(res){
+        progressCb = null;
+        return res.data || {};
+      }, function(err){
+        progressCb = null;
+        throw err;
+      });
+    });
+  }
+
+  function showResult(list, conf, errMsg){
+    var ok = !!(list && list.length);
+    current = ok ? list[0] : "";
+    $("#scanTitle").textContent = ok ? "VIN распознан" : "Не удалось распознать";
+    $("#scanVin").textContent = ok ? current : "—";
+    $("#scanApply").style.display = ok ? "" : "none";
+    $("#scanRetryRow").style.display = ok ? "none" : "flex";
+    $("#scanHint").textContent = ok
+      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Если не совпало — исправьте вручную."
+      : (errMsg || "Сфотографируйте табличку VIN крупно и ровно, без бликов, целиком в кадре. Или введите VIN вручную.");
+    $("#scanModal").classList.add("on");
+  }
+
+  function scan(file){
+    if(busy) return;
+    busy = true;
+    btn.disabled = true;
+    showOverlay("Готовим фото…", "Держите VIN целиком в кадре");
+    var canvas = null;
+
+    function run(psm){
+      return recognize(canvas, psm).then(function(data){
+        return { list: findCandidates(data.text), conf: data.confidence || 0 };
+      });
+    }
+
+    fileToCanvas(file).then(function(c){
+      canvas = c;
+      return run("7");
+    }).then(function(a){
+      if(a.list.length === 1 && a.list[0].clean) return { list: [a.list[0].vin], conf: a.conf };
+      return run("6").then(function(b){
+        var v = vote([a, b]);
+        if(v.list.length) return v;
+        return run("11").then(function(c){ return vote([a, b, c]); });
+      });
+    }).then(function(res){
+      hideOverlay();
+      showResult(res.list, res.conf);
+    }).catch(function(err){
+      hideOverlay();
+      showResult([], 0, (err && err.message) || "");
+    }).then(function(){
+      busy = false;
+      btn.disabled = false;
+    });
+  }
+
+  btn.addEventListener("click", function(){
+    if(busy) return;
+    fileInput.value = "";
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    this.value = "";
+    if(f) scan(f);
+  });
+
+  $("#scanApply").addEventListener("click", function(){
+    if(!current) return;
+    vin.value = current;
+    vin.dispatchEvent(new Event("input", { bubbles: true }));
+    vin.dispatchEvent(new Event("change", { bubbles: true }));
+    $("#scanModal").classList.remove("on");
+    toast("VIN подставлен — проверьте символы");
+    vin.focus();
+    try{ vin.setSelectionRange(0, vin.value.length); }catch(e){}
+  });
+
+  $("#scanCancel").addEventListener("click", function(){ $("#scanModal").classList.remove("on"); });
+  $("#scanModal").addEventListener("click", function(e){ if(e.target === this) this.classList.remove("on"); });
+  $("#scanRetry").addEventListener("click", function(){
+    $("#scanModal").classList.remove("on");
+    fileInput.value = "";
+    fileInput.click();
+  });
 })();
 </script>
 <script>

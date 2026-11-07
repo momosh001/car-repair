@@ -2,7 +2,7 @@
    Кэширует оболочку приложения, чтобы оно открывалось без интернета
    и запускалось как обычное приложение на iPhone (режим standalone). */
 
-var CACHE = "carRepair-v3";
+var CACHE = "carRepair-v6";
 var ASSETS = [
   "./",
   "./index.html",
@@ -49,8 +49,14 @@ self.addEventListener("fetch", function (e) {
         if (res && res.status === 200) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put("index.html", copy); });
+          return res;
         }
-        return res;
+        // сеть ответила ошибкой (например, 502 от провайдера) — отдаём сохранённую копию
+        return caches.open(CACHE).then(function (c) {
+          return c.match("index.html");
+        }).then(function (hit) {
+          return hit || res;
+        });
       }).catch(function () {
         return caches.open(CACHE).then(function (c) {
           return c.match("index.html");
