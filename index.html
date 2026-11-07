@@ -1669,6 +1669,7 @@ function showOverlay(status, sub){
   }
 
   function showResult(list, conf, all, errMsg){
+    all = all || [];
     var ok = !!(list && list.length);
     current = ok ? list[0] : "";
     $("#scanTitle").textContent = ok ? "VIN распознан" : "Не удалось распознать";
@@ -1679,9 +1680,10 @@ function showOverlay(status, sub){
     var candBox = $("#scanCandidates");
     if(ok && all && all.length > 1){
       candBox.style.display = "";
-      candBox.innerHTML = all.slice(0,4).map(function(c){
+      candBox.innerHTML = all.slice(0,4).map(function(c, idx){
         var mark = c.check ? " <span style='color:var(--accent);font-weight:700'>✓</span>" : "";
-        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+c.vin+'" style="margin-right:8px" '+(c===all[0]?'checked':'')+'>'+c.vin+mark+'</label>';
+        var checked = (idx === 0) ? 'checked' : '';
+        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+c.vin+'" style="margin-right:8px" onclick="current=this.value" '+checked+'>'+c.vin+mark+'</label>';
       }).join("");
     }else{
       candBox.style.display = "none";
@@ -1704,7 +1706,8 @@ function scan(file){
 
     function run(psm){
       return recognize(canvas, psm).then(function(data){
-        return { list: findCandidates(data.text), conf: data.confidence || 0 };
+        var cands = findCandidates(data.text);
+        return { list: cands.map(function(c){ return c.vin; }), conf: data.confidence || 0, all: cands };
       });
     }
 
@@ -1720,7 +1723,7 @@ function scan(file){
       });
     }).then(function(res){
       hideOverlay();
-      showResult(res.list, res.conf, res.all);
+      showResult(res.list, res.conf, res.all || []);
     }).catch(function(err){
       hideOverlay();
       showResult([], 0, [], (err && err.message) || "");
