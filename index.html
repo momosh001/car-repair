@@ -1657,8 +1657,9 @@ details.backup[open] summary::after{content:"▴"}
   });
 
   $("#scanApply").addEventListener("click", function(){
-    if(!current) return;
-    vin.value = current;
+    var sel = document.querySelector('input[name="cand"]:checked');
+    if(!sel) return;
+    vin.value = sel.value;
     vin.dispatchEvent(new Event("input", { bubbles: true }));
     vin.dispatchEvent(new Event("change", { bubbles: true }));
     $("#scanModal").classList.remove("on");
