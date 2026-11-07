@@ -1762,10 +1762,18 @@ btnCam.addEventListener("click", function(){
     vin.dispatchEvent(new Event("input", { bubbles: true }));
     vin.dispatchEvent(new Event("change", { bubbles: true }));
     $("#scanModal").classList.remove("on");
+    current = "";
     toast("VIN подставлен — проверьте символы");
     vin.focus();
     try{ vin.setSelectionRange(0, vin.value.length); }catch(e){}
   });
+
+  $("#scanCancel").addEventListener("click", function(){
+    current = "";
+    $("#scanModal").classList.remove("on");
+    toast("Отменено");
+  });
+
 $("#scanRetry").addEventListener("click", function(){
     $("#scanModal").classList.remove("on");
     camInput.value = "";
