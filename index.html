@@ -1646,7 +1646,7 @@ details.backup[open] summary::after{content:"▴"}
     });
   }
 
-  function showResult(list, conf, all, errMsg){
+  function showResult(list, conf, all, errMsg, rawText){
     all = all || [];
     var ok = !!(list && list.length);
     current = ok ? list[0] : "";
@@ -1656,22 +1656,33 @@ details.backup[open] summary::after{content:"▴"}
     $("#scanRetryRow").style.display = ok ? "none" : "flex";
 
     var candBox = $("#scanCandidates");
-    if(ok && all && all.length > 1){
+    if(list.length > 0){
       candBox.style.display = "";
-      candBox.innerHTML = all.slice(0,4).map(function(c, idx){
+      candBox.innerHTML = list.slice(0,4).map(function(v, idx){
+        var c = all.find(function(x){ return x.vin === v; }) || {};
         var mark = c.check ? " <span style='color:var(--accent);font-weight:700'>✓</span>" : "";
         var checked = (idx === 0) ? 'checked' : '';
-        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+c.vin+'" style="margin-right:8px" onclick="current=this.value" '+checked+'>'+c.vin+mark+'</label>';
+        return '<label style="display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="cand" value="'+v+'" style="margin-right:8px" onclick="current=this.value" '+checked+'>'+v+mark+'</label>';
       }).join("");
     }else{
       candBox.style.display = "none";
       candBox.innerHTML = "";
     }
 
+    // Показываемсырой текст OCR если ничего не найдено — пользователь увидит, что было на фото
+    var rawLine = "";
+    if(!ok && rawText){
+      var firstLine = String(rawText).split(/\r?\n/)[0];
+      if(firstLine && firstLine.trim().length > 0){
+        rawLine = " Распознанный текст: \"" + firstLine.trim().slice(0,60) + "\"";
+      }
+    }
+
     var checkText = (all&&all[0]&&all[0].check)?"совпадает":"не подтверждена";
-    $("#scanHint").textContent = ok
-      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Контрольная цифра VIN: "+checkText+". Если не совпало — исправьте вручную."
-      : (errMsg || "Сфотографируйте табличку VIN крупно и ровно, без бликов, целиком в кадре. Или введите VIN вручную.");
+    var hintBase = ok
+      ? "Проверьте символы: часто путаются 0/О, 1/I, 8/B, 5/S. Контрольная цифра VIN: "+checkText+"."
+      : "Сфотографируйте табличку VIN крупно и ровно, без бликов, целиком в кадре."+rawLine;
+    $("#scanHint").textContent = hintBase + " Если не совпало — исправьте вручную.";
     $("#scanModal").classList.add("on");
   }
 function scan(file){
@@ -1679,6 +1690,7 @@ function scan(file){
     busy = true;
     showOverlay("Готовим фото…", "Держите VIN целиком в кадре");
     var canvas = null;
+    var rawOcrText = "";
     btnCam.disabled = true;
     btnGal.disabled = true;
 
@@ -1686,16 +1698,17 @@ function scan(file){
       canvas = c;
       return recognize(canvas, "7");
     }).then(function(data){
-      var cands = findCandidates(data.text || "");
+      rawOcrText = data.text || "";
+      var cands = findCandidates(rawOcrText);
       hideOverlay();
-      showResult(cands.map(function(c){ return c.vin; }), data.confidence || 0, cands);
+      showResult(cands.map(function(c){ return c.vin; }), data.confidence || 0, cands, null, rawOcrText);
     }).catch(function(err){
       hideOverlay();
       var msg = (err && err.message) || "";
       if(/Tesseract/i.test(msg) || msg.indexOf("OCR") > -1 || msg.indexOf("createWorker") > -1){
         msg = "OCR не загрузился на этом устройстве. Введите VIN вручную.";
       }
-      showResult([], 0, [], msg || "Не удалось обработать фото");
+      showResult([], 0, [], msg || "Не удалось обработать фото", rawOcrText);
     }).then(function(){
       busy = false;
       btnCam.disabled = false;
